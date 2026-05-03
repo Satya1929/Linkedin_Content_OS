@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { createNewsPlaceholder, starterNewsSources } from "@/lib/news";
+import { starterNewsSources } from "@/lib/news";
 
 export async function GET() {
   return NextResponse.json({
     sources: starterNewsSources,
-    placeholders: createNewsPlaceholder(),
-    note: "News fetching is staged for the next implementation phase; these are the approved initial sources."
+    note: "These are the compliant Phase 5 sources used for local news discovery."
   });
 }

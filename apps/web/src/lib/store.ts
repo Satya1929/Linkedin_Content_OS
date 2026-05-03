@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { defaultSnapshot } from "./default-data";
 import { loadPromptRuleSets } from "./prompts";
-import type { Draft, DraftPatch, MetricsSnapshot, PerformanceInsight, PromptRuleChange, StoreSnapshot } from "./types";
+import type { Draft, DraftPatch, MetricsSnapshot, PerformanceInsight, PromptRuleChange, SourceItem, StoreSnapshot } from "./types";
 
 function composeDraftBody(draft: Draft, patch: DraftPatch) {
   const cta = patch.cta ?? draft.cta;
@@ -70,6 +70,23 @@ export async function addDraft(draft: Draft) {
   snapshot.drafts = [draft, ...snapshot.drafts];
   for (const source of draft.sources) {
     if (!snapshot.sourceItems.some((item) => item.id === source.id)) {
+      snapshot.sourceItems.unshift(source);
+    }
+  }
+  await saveStoreSnapshot(snapshot);
+  return snapshot;
+}
+
+export async function addSourceItems(sourceItems: SourceItem[]) {
+  const snapshot = await ensureStore();
+  for (const source of sourceItems) {
+    const existingIndex = snapshot.sourceItems.findIndex((item) => (source.url && item.url === source.url) || item.title === source.title);
+    if (existingIndex >= 0) {
+      snapshot.sourceItems[existingIndex] = {
+        ...snapshot.sourceItems[existingIndex],
+        ...source
+      };
+    } else {
       snapshot.sourceItems.unshift(source);
     }
   }

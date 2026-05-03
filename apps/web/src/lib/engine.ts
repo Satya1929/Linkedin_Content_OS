@@ -145,7 +145,7 @@ function buildCarousel(topic: string) {
 }
 
 export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapshot): Promise<Draft> {
-  const sources = await buildSourceItems(input.rawText, input.sourceLinks);
+  const sources = input.sourceItems?.length ? input.sourceItems : await buildSourceItems(input.rawText, input.sourceLinks);
   const sourceTitles = sources.filter((source) => source.sourceType !== "raw-context").map((source) => source.title);
   const parts = await buildDraftPartsWithProvider(input.rawText, sourceTitles);
   const body = buildBody(parts);

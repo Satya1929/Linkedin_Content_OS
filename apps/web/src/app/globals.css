@@ -210,6 +210,7 @@ button:disabled {
 }
 
 .draft-list,
+.news-list,
 .insight-list {
   display: grid;
   gap: 9px;
@@ -293,6 +294,11 @@ button:disabled {
   color: var(--warn);
 }
 
+.compact-warning {
+  margin: 0;
+  font-size: 12px;
+}
+
 .error {
   background: #ffecec;
   color: var(--danger);
@@ -372,6 +378,37 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 13px;
+}
+
+.news-cluster {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.news-cluster small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.news-cluster p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.repeat-flag {
+  width: fit-content;
+  border-radius: 999px;
+  background: #fff3e8;
+  color: var(--warn);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
 }
 
 .insight.approved {

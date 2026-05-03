@@ -22,6 +22,35 @@ export type SourceItem = {
   createdAt: string;
 };
 
+export type NewsSource = {
+  id: string;
+  name: string;
+  url: string;
+  category: "official" | "research" | "developer-community";
+};
+
+export type NewsCluster = {
+  id: string;
+  title: string;
+  items: SourceItem[];
+  score: number;
+  keywords: string[];
+  angle: string;
+  repeatedWithPastPost: boolean;
+};
+
+export type NewsDigest = {
+  fetchedAt: string;
+  sources: NewsSource[];
+  items: SourceItem[];
+  clusters: NewsCluster[];
+  failedSources: Array<{
+    sourceId: string;
+    name: string;
+    reason: string;
+  }>;
+};
+
 export type QualityScore = {
   overall: number;
   hookStrength: number;
@@ -150,6 +179,7 @@ export type CreateDraftInput = {
   rawText: string;
   sourceLinks?: string[];
   format: ContentFormat;
+  sourceItems?: SourceItem[];
 };
 
 export type DraftPatch = Partial<

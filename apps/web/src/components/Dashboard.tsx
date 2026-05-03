@@ -10,13 +10,14 @@ import {
   Image as ImageIcon,
   Lightbulb,
   Lock,
+  Newspaper,
   RefreshCw,
   Send,
   Sparkles,
   ThumbsDown,
   Unlock
 } from "lucide-react";
-import type { ContentFormat, Draft, DraftLocks, PerformanceInsight, StoreSnapshot } from "@/lib/types";
+import type { ContentFormat, Draft, DraftLocks, NewsCluster, NewsDigest, PerformanceInsight, StoreSnapshot } from "@/lib/types";
 
 type Props = {
   initialSnapshot: StoreSnapshot;
@@ -27,7 +28,7 @@ type ApiOptions = {
   body?: unknown;
 };
 
-async function api(path: string, options: ApiOptions = {}) {
+async function api<T = StoreSnapshot>(path: string, options: ApiOptions = {}) {
   const response = await fetch(path, {
     method: options.method ?? "GET",
     headers: options.body ? { "content-type": "application/json" } : undefined,
@@ -38,7 +39,7 @@ async function api(path: string, options: ApiOptions = {}) {
     throw new Error(await response.text());
   }
 
-  return (await response.json()) as StoreSnapshot;
+  return (await response.json()) as T;
 }
 
 function statusLabel(status: Draft["status"]) {
@@ -70,6 +71,7 @@ export function Dashboard({ initialSnapshot }: Props) {
   const [analyticsCsv, setAnalyticsCsv] = useState(
     "draft_id,impressions,likes,comments,reposts,profile_views\n"
   );
+  const [newsDigest, setNewsDigest] = useState<NewsDigest | null>(null);
   const [scheduleMode, setScheduleMode] = useState<"default" | "exact" | "range">("default");
   const [scheduleDate, setScheduleDate] = useState("");
   const [exactAt, setExactAt] = useState("");
@@ -106,6 +108,32 @@ export function Dashboard({ initialSnapshot }: Props) {
         body: {
           rawText,
           sourceLinks: sourceLink ? [sourceLink] : [],
+          format
+        }
+      });
+      setSelectedId(next.drafts[0]?.id ?? "");
+      return next;
+    });
+  }
+
+  async function fetchNewsDigest() {
+    setBusy("Fetching news");
+    setError("");
+    try {
+      setNewsDigest(await api<NewsDigest>("/api/news/digest"));
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Could not fetch news.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function createNewsDraft(cluster: NewsCluster) {
+    await run("Generating news draft", async () => {
+      const next = await api("/api/drafts/from-news", {
+        method: "POST",
+        body: {
+          cluster,
           format
         }
       });
@@ -230,6 +258,42 @@ export function Dashboard({ initialSnapshot }: Props) {
             <Sparkles size={16} />
             Generate draft
           </button>
+
+          <div className="divider" />
+          <div className="section-heading">
+            <Newspaper size={18} />
+            <h2>News mode</h2>
+          </div>
+          <button onClick={fetchNewsDigest} disabled={Boolean(busy)}>
+            <Newspaper size={16} />
+            Fetch AI news
+          </button>
+          <div className="news-list">
+            {newsDigest ? (
+              <p className="muted">
+                {newsDigest.clusters.length} ranked clusters from {newsDigest.items.length} source items.
+              </p>
+            ) : (
+              <p className="muted">Fetch trusted feeds, then generate a thesis-led post from a cluster.</p>
+            )}
+            {newsDigest?.failedSources.length ? (
+              <p className="warning compact-warning">{newsDigest.failedSources.length} sources failed locally.</p>
+            ) : null}
+            {newsDigest?.clusters.slice(0, 5).map((cluster) => (
+              <article className="news-cluster" key={cluster.id}>
+                <div>
+                  <strong>{cluster.title}</strong>
+                  <small>Score {cluster.score} · {cluster.items.length} item{cluster.items.length === 1 ? "" : "s"}</small>
+                </div>
+                <p>{cluster.angle}</p>
+                {cluster.repeatedWithPastPost ? <span className="repeat-flag">Possible repeat</span> : null}
+                <button onClick={() => createNewsDraft(cluster)}>
+                  <Sparkles size={15} />
+                  Draft from this
+                </button>
+              </article>
+            ))}
+          </div>
 
           <div className="divider" />
           <div className="section-heading">
