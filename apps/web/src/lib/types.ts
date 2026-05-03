@@ -184,7 +184,20 @@ export type Workspace = {
   };
 };
 
+export type LeadMagnet = {
+  id: string;
+  workspaceId: string;
+  productIdea: string;
+  pdfOutline: string[];
+  postSequence: string[];
+  ctaLink: string;
+  conversionNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StoreSnapshot = {
+
   activeWorkspaceId: string;
   activeProfileId: string;
   workspaces: Workspace[];
@@ -195,6 +208,7 @@ export type StoreSnapshot = {
   insights: PerformanceInsight[];
   promptRuleSets: PromptRuleSet[];
   promptRuleChanges: PromptRuleChange[];
+  leadMagnets: LeadMagnet[];
 };
 
 export type CreateDraftInput = {

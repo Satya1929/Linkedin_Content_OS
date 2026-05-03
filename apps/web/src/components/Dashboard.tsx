@@ -19,6 +19,7 @@ import {
   Unlock
 } from "lucide-react";
 import type { ContentFormat, Draft, DraftLocks, NewsCluster, NewsDigest, PerformanceInsight, StoreSnapshot } from "@/lib/types";
+import { LeadMagnetsPanel } from "./LeadMagnetsPanel";
 import { carouselToMarkdown } from "@/lib/visuals";
 
 type Props = {
@@ -553,8 +554,9 @@ export function Dashboard({ initialSnapshot }: Props) {
           )}
         </section>
 
-        <aside className="learning-panel">
-          <div className="section-heading">
+        <div className="right-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <aside className="learning-panel" style={{ marginTop: 0 }}>
+            <div className="section-heading">
             <BarChart3 size={18} />
             <h2>Weekly learning</h2>
           </div>
@@ -594,6 +596,9 @@ export function Dashboard({ initialSnapshot }: Props) {
             ))}
           </div>
         </aside>
+
+        <LeadMagnetsPanel snapshot={snapshot} run={run} />
+        </div>
       </section>
     </main>
   );

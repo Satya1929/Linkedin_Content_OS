@@ -45,6 +45,7 @@ async function ensureStore(): Promise<StoreSnapshot> {
       snapshot.promptRuleSets = await loadPromptRuleSets();
       await saveStoreSnapshot(snapshot);
     }
+    snapshot.leadMagnets = snapshot.leadMagnets || [];
     return snapshot;
   } catch {
     const snapshot = {

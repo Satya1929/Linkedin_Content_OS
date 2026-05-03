@@ -37,5 +37,6 @@ export const defaultSnapshot: StoreSnapshot = {
   metrics: [],
   insights: [],
   promptRuleSets: [],
-  promptRuleChanges: []
+  promptRuleChanges: [],
+  leadMagnets: []
 };
