@@ -1,9 +1,9 @@
 # Project Progress: LinkedIn Content Engine
 
 ## Current Status
-- **Phase**: 8 (SaaS Readiness)
-- **Completion**: 10%
-- **Overall Completion**: ~85%
+- **Phase**: 9 (Advanced Automations)
+- **Completion**: 0%
+- **Overall Completion**: ~90%
 
 ## Completed Phases
 - **Phase 0**: Repo and Environment Foundation (100%)
@@ -26,11 +26,16 @@
 - [x] "Publish Now" action for drafts.
 - [x] LinkedIn Analytics sync.
 
-## Current Phase: Phase 8 (SaaS Readiness)
-- [ ] Multi-tenant workspace/profile support in store.
-- [ ] Profile switcher in UI.
-- [ ] Simple Auth simulation.
-- [ ] Usage limits and mock billing dashboard.
+## Completed Phase: Phase 8 (SaaS Readiness)
+- [x] Multi-tenant workspace/profile support in store.
+- [x] Profile switcher in UI.
+- [x] Simple Auth simulation.
+- [x] Usage limits and mock billing dashboard in header.
+
+## Current Phase: Phase 9 (Advanced Automations)
+- [ ] Auto-reply skill (LinkedIn comment monitoring).
+- [ ] Weekly PDF report generation (Lead magnet).
+- [ ] Voice-to-post workflow (Mobile recording to draft).
 
 ## Tech Stack
 - **Frontend**: Next.js (App Router), Tailwind CSS, shadcn/ui.

@@ -177,11 +177,18 @@ export type Workspace = {
   id: string;
   name: string;
   createdAt: string;
+  billing?: {
+    plan: "free" | "pro" | "agency";
+    postsThisMonth: number;
+    postLimit: number;
+  };
 };
 
 export type StoreSnapshot = {
-  workspace: Workspace;
-  creatorProfile: CreatorProfile;
+  activeWorkspaceId: string;
+  activeProfileId: string;
+  workspaces: Workspace[];
+  creatorProfiles: CreatorProfile[];
   drafts: Draft[];
   sourceItems: SourceItem[];
   metrics: MetricsSnapshot[];

@@ -87,6 +87,16 @@ export function Dashboard({ initialSnapshot }: Props) {
     [selectedId, snapshot.drafts]
   );
 
+  const activeProfile = useMemo(
+    () => snapshot.creatorProfiles.find((p) => p.id === snapshot.activeProfileId) ?? snapshot.creatorProfiles[0],
+    [snapshot.activeProfileId, snapshot.creatorProfiles]
+  );
+
+  const activeWorkspace = useMemo(
+    () => snapshot.workspaces.find((w) => w.id === snapshot.activeWorkspaceId) ?? snapshot.workspaces[0],
+    [snapshot.activeWorkspaceId, snapshot.workspaces]
+  );
+
   async function run(label: string, action: () => Promise<StoreSnapshot>) {
     setBusy(label);
     setError("");
@@ -169,7 +179,7 @@ export function Dashboard({ initialSnapshot }: Props) {
                   date: scheduleDate,
                   rangeStart,
                   rangeEnd,
-                  timezone: snapshot.creatorProfile.timezone
+                  timezone: activeProfile.timezone
                 }
               : undefined
         }
@@ -231,8 +241,13 @@ export function Dashboard({ initialSnapshot }: Props) {
           <span>{snapshot.drafts.length} drafts</span>
           <span>{snapshot.metrics.length} metrics</span>
           <span>{snapshot.promptRuleChanges.length} learnings</span>
+          {activeWorkspace.billing ? (
+            <span className={activeWorkspace.billing.postsThisMonth >= activeWorkspace.billing.postLimit ? "danger-text" : ""}>
+              {activeWorkspace.billing.postsThisMonth}/{activeWorkspace.billing.postLimit} posts · {activeWorkspace.billing.plan.toUpperCase()}
+            </span>
+          ) : null}
           <div className="linkedin-status">
-            {snapshot.creatorProfile.linkedinAccessToken ? (
+            {activeProfile.linkedinAccessToken ? (
               <span className="success-text">
                 <Check size={14} />
                 LinkedIn Connected
@@ -242,6 +257,16 @@ export function Dashboard({ initialSnapshot }: Props) {
                 Connect LinkedIn
               </a>
             )}
+          </div>
+          <div className="profile-switcher">
+            <select 
+              value={snapshot.activeProfileId} 
+              onChange={(e) => run("Switching profile", () => api(`/api/profiles/switch`, { method: "POST", body: { profileId: e.target.value } }))}
+            >
+              {snapshot.creatorProfiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
         </div>
       </header>
@@ -513,7 +538,7 @@ export function Dashboard({ initialSnapshot }: Props) {
                     <CalendarClock size={16} />
                     Schedule
                   </button>
-                  <button className="primary" onClick={() => draftAction("publishNow")} disabled={!snapshot.creatorProfile.linkedinAccessToken}>
+                  <button className="primary" onClick={() => draftAction("publishNow")} disabled={!activeProfile.linkedinAccessToken}>
                     <Share2 size={16} />
                     Publish Now
                   </button>
@@ -538,7 +563,7 @@ export function Dashboard({ initialSnapshot }: Props) {
             <BarChart3 size={16} />
             Import CSV
           </button>
-          <button onClick={syncLinkedInAnalytics} disabled={!snapshot.creatorProfile.linkedinAccessToken}>
+          <button onClick={syncLinkedInAnalytics} disabled={!activeProfile.linkedinAccessToken}>
             <RefreshCw size={16} />
             Sync LinkedIn
           </button>

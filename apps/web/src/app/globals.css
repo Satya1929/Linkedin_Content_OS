@@ -114,6 +114,27 @@ main {
   color: var(--accent-strong);
 }
 
+.danger-text {
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
+
+.profile-switcher select {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--ink);
+  padding: 8px 11px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.profile-switcher select:hover {
+  border-color: var(--accent);
+}
+
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr) minmax(280px, 360px);

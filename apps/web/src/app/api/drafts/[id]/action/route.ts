@@ -78,10 +78,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     if (payload.action === "schedule") {
+      const profile = currentSnapshot.creatorProfiles.find(p => p.id === currentSnapshot.activeProfileId);
       return {
         ...draft,
         status: "scheduled",
-        scheduledAt: resolveSchedule(payload.schedule ?? { mode: "default" }, currentSnapshot.creatorProfile.defaultPostTime),
+        scheduledAt: resolveSchedule(payload.schedule ?? { mode: "default" }, profile?.defaultPostTime ?? "10:30"),
         updatedAt: now
       };
     }

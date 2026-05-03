@@ -55,18 +55,22 @@ export async function exchangeLinkedInCode(code: string) {
   const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
 
   const snapshot = await getStoreSnapshot();
-  snapshot.creatorProfile.linkedinAccessToken = data.access_token;
-  snapshot.creatorProfile.linkedinRefreshToken = data.refresh_token;
-  snapshot.creatorProfile.linkedinExpiresAt = expiresAt;
-  await saveStoreSnapshot(snapshot);
+  const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
+  if (profile) {
+    profile.linkedinAccessToken = data.access_token;
+    profile.linkedinRefreshToken = data.refresh_token;
+    profile.linkedinExpiresAt = expiresAt;
+    await saveStoreSnapshot(snapshot);
+  }
 
   return data;
 }
 
 export async function publishToLinkedIn(draft: Draft) {
   const snapshot = await getStoreSnapshot();
-  const token = snapshot.creatorProfile.linkedinAccessToken;
-  const personId = snapshot.creatorProfile.id; // Assuming we use personId for posting
+  const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
+  const token = profile?.linkedinAccessToken;
+  const personId = profile?.id; // Assuming we use personId for posting
 
   if (!token) {
     throw new Error("LinkedIn not authenticated");
@@ -105,7 +109,8 @@ export async function publishToLinkedIn(draft: Draft) {
 
 export async function fetchLinkedInAnalytics(postId: string): Promise<MetricsSnapshot | null> {
   const snapshot = await getStoreSnapshot();
-  const token = snapshot.creatorProfile.linkedinAccessToken;
+  const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
+  const token = profile?.linkedinAccessToken;
 
   if (!token) {
     return null;

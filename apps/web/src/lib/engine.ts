@@ -127,8 +127,8 @@ export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapsh
 
   return {
     id: crypto.randomUUID(),
-    workspaceId: snapshot.workspace.id,
-    creatorProfileId: snapshot.creatorProfile.id,
+    workspaceId: snapshot.activeWorkspaceId,
+    creatorProfileId: snapshot.activeProfileId,
     status: "generated",
     format: input.format,
     ...parts,
