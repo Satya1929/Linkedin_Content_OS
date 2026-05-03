@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { LeadMagnet, StoreSnapshot } from "@/lib/types";
+import type { StoreSnapshot } from "@/lib/types";
 
 type Props = {
   snapshot: StoreSnapshot;

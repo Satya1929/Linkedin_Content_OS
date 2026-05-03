@@ -1,9 +1,12 @@
 # Project Progress: LinkedIn Content Engine
 
 ## Current Status
-- **Phase**: 9 (Advanced Automations)
-- **Completion**: 0%
-- **Overall Completion**: ~90%
+- **Overall Completion**: ~85%
+
+## Finalizing Original Blueprint (Remaining Tasks)
+- [x] Lead Magnet Funnel pipeline (Product idea -> Outline -> Post Sequence)
+- [ ] Database Migration: Move from `local-store.json` to Prisma + PostgreSQL + pgvector (Phase 0 & Phase 2)
+- [ ] Carousel PDF Export generation (Phase 7)
 
 ## Completed Phases
 - **Phase 0**: Repo and Environment Foundation (100%)
@@ -32,10 +35,6 @@
 - [x] Simple Auth simulation.
 - [x] Usage limits and mock billing dashboard in header.
 
-## Current Phase: Phase 9 (Advanced Automations)
-- [ ] Auto-reply skill (LinkedIn comment monitoring).
-- [ ] Weekly PDF report generation (Lead magnet).
-- [ ] Voice-to-post workflow (Mobile recording to draft).
 
 ## Tech Stack
 - **Frontend**: Next.js (App Router), Tailwind CSS, shadcn/ui.
