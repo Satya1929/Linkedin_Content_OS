@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DraftStatus {
+  GENERATED
+  EDITED
+  APPROVED
+  REJECTED
+  SCHEDULED
+  POSTED
+  MEASURED
+}
+
+enum ContentFormat {
+  TEXT
+  IMAGE
+  CAROUSEL
+  MIXED
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  profiles  CreatorProfile[]
+  drafts    Draft[]
+}
+
+model CreatorProfile {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  positioning String
+  timezone    String   @default("Asia/Kolkata")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  drafts      Draft[]
+}
+
+model SourceItem {
+  id          String   @id @default(cuid())
+  url         String?
+  title       String
+  summary     String?
+  sourceType  String
+  publishedAt DateTime?
+  rawText     String?
+  createdAt   DateTime @default(now())
+  drafts      DraftSource[]
+}
+
+model PromptRuleSet {
+  id        String   @id @default(cuid())
+  name      String
+  version   Int
+  content   String
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  changes   PromptRuleChange[]
+}
+
+model PromptRuleChange {
+  id              String        @id @default(cuid())
+  promptRuleSetId String
+  observation     String
+  reason          String
+  improvement     String
+  status          String        @default("PROPOSED")
+  createdAt       DateTime      @default(now())
+  promptRuleSet   PromptRuleSet @relation(fields: [promptRuleSetId], references: [id])
+}
+
+model Draft {
+  id                   String        @id @default(cuid())
+  workspaceId          String
+  creatorProfileId     String
+  status               DraftStatus   @default(GENERATED)
+  format               ContentFormat @default(TEXT)
+  hook                 String
+  context              String
+  insight              String
+  takeaway             String
+  cta                  String?
+  body                 String
+  imagePrompt          String?
+  carouselOutline      Json?
+  qualityScore         Int
+  similarityScore      Float         @default(0)
+  similarityWarning    Boolean       @default(false)
+  topicFingerprint     String
+  angleFingerprint     String
+  scheduledAt          DateTime?
+  postedAt             DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  workspace            Workspace     @relation(fields: [workspaceId], references: [id])
+  creatorProfile       CreatorProfile @relation(fields: [creatorProfileId], references: [id])
+  sources              DraftSource[]
+  assets               DraftAsset[]
+  metrics              MetricsSnapshot[]
+}
+
+model DraftSource {
+  draftId      String
+  sourceItemId String
+  draft        Draft      @relation(fields: [draftId], references: [id])
+  sourceItem   SourceItem @relation(fields: [sourceItemId], references: [id])
+
+  @@id([draftId, sourceItemId])
+}
+
+model DraftAsset {
+  id        String   @id @default(cuid())
+  draftId   String
+  type      String
+  prompt    String?
+  url       String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  draft     Draft    @relation(fields: [draftId], references: [id])
+}
+
+model MetricsSnapshot {
+  id          String   @id @default(cuid())
+  draftId     String?
+  capturedAt  DateTime @default(now())
+  impressions Int
+  likes       Int
+  comments    Int
+  reposts     Int      @default(0)
+  profileViews Int     @default(0)
+  raw          Json?
+  draft        Draft?   @relation(fields: [draftId], references: [id])
+}
+
+model PerformanceInsight {
+  id          String   @id @default(cuid())
+  observation String
+  reason      String
+  improvement String
+  status      String   @default("PROPOSED")
+  createdAt   DateTime @default(now())
+}
+
+model EmbeddingRecord {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  vector     Unsupported("vector(384)")?
+  textHash   String
+  createdAt  DateTime @default(now())
+}
