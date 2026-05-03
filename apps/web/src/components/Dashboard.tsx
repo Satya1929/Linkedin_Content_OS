@@ -13,6 +13,7 @@ import {
   Newspaper,
   RefreshCw,
   Send,
+  Share2,
   Sparkles,
   ThumbsDown,
   Unlock
@@ -187,6 +188,14 @@ export function Dashboard({ initialSnapshot }: Props) {
     );
   }
 
+  async function syncLinkedInAnalytics() {
+    await run("Syncing LinkedIn analytics", () =>
+      api("/api/analytics/sync", {
+        method: "POST"
+      })
+    );
+  }
+
   async function updateInsight(insight: PerformanceInsight, action: "approve" | "reject") {
     await run(`${action} insight`, () =>
       api(`/api/insights/${insight.id}/action`, {
@@ -221,7 +230,19 @@ export function Dashboard({ initialSnapshot }: Props) {
         <div className="status-strip">
           <span>{snapshot.drafts.length} drafts</span>
           <span>{snapshot.metrics.length} metrics</span>
-          <span>{snapshot.promptRuleChanges.length} approved learnings</span>
+          <span>{snapshot.promptRuleChanges.length} learnings</span>
+          <div className="linkedin-status">
+            {snapshot.creatorProfile.linkedinAccessToken ? (
+              <span className="success-text">
+                <Check size={14} />
+                LinkedIn Connected
+              </span>
+            ) : (
+              <a href="/api/linkedin/oauth/start" className="connect-link">
+                Connect LinkedIn
+              </a>
+            )}
+          </div>
         </div>
       </header>
 
@@ -492,6 +513,10 @@ export function Dashboard({ initialSnapshot }: Props) {
                     <CalendarClock size={16} />
                     Schedule
                   </button>
+                  <button className="primary" onClick={() => draftAction("publishNow")} disabled={!snapshot.creatorProfile.linkedinAccessToken}>
+                    <Share2 size={16} />
+                    Publish Now
+                  </button>
                   <button onClick={() => navigator.clipboard.writeText(selectedDraft.body)}>
                     <Copy size={16} />
                     Copy post
@@ -511,7 +536,11 @@ export function Dashboard({ initialSnapshot }: Props) {
           <textarea value={analyticsCsv} onChange={(event) => setAnalyticsCsv(event.target.value)} />
           <button onClick={importAnalytics}>
             <BarChart3 size={16} />
-            Import metrics
+            Import CSV
+          </button>
+          <button onClick={syncLinkedInAnalytics} disabled={!snapshot.creatorProfile.linkedinAccessToken}>
+            <RefreshCw size={16} />
+            Sync LinkedIn
           </button>
 
           <div className="divider" />

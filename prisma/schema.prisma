@@ -33,13 +33,16 @@ model Workspace {
 }
 
 model CreatorProfile {
-  id          String   @id @default(cuid())
-  workspaceId String
-  name        String
-  positioning String
-  timezone    String   @default("Asia/Kolkata")
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
-  drafts      Draft[]
+  id                    String   @id @default(cuid())
+  workspaceId           String
+  name                  String
+  positioning           String
+  timezone              String   @default("Asia/Kolkata")
+  linkedinAccessToken   String?
+  linkedinRefreshToken  String?
+  linkedinExpiresAt     DateTime?
+  workspace             Workspace @relation(fields: [workspaceId], references: [id])
+  drafts                Draft[]
 }
 
 model SourceItem {

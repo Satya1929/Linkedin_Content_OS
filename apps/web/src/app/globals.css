@@ -88,6 +88,32 @@ main {
   font-weight: 700;
 }
 
+.linkedin-status {
+  display: flex;
+  align-items: center;
+}
+
+.success-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.connect-link {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.connect-link:hover {
+  color: var(--accent-strong);
+}
+
 .workspace-grid {
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr) minmax(280px, 360px);

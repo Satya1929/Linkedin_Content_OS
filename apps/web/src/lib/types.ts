@@ -168,6 +168,9 @@ export type CreatorProfile = {
   timezone: string;
   defaultPostTime: string;
   dailyMinimumPosts: number;
+  linkedinAccessToken?: string;
+  linkedinRefreshToken?: string;
+  linkedinExpiresAt?: string;
 };
 
 export type Workspace = {

@@ -16,7 +16,10 @@ export const defaultSnapshot: StoreSnapshot = {
       "College graduate with AI expertise, building technical credibility for jobs, business opportunities, and future AI product funnels.",
     timezone: "Asia/Kolkata",
     defaultPostTime: "10:30",
-    dailyMinimumPosts: 1
+    dailyMinimumPosts: 1,
+    linkedinAccessToken: undefined,
+    linkedinRefreshToken: undefined,
+    linkedinExpiresAt: undefined
   },
   drafts: [],
   sourceItems: [],

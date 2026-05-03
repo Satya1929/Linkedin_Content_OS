@@ -5,7 +5,7 @@ import { resolveSchedule } from "@/lib/scheduling";
 import { updateDraft } from "@/lib/store";
 
 const actionSchema = z.object({
-  action: z.enum(["approve", "reject", "regenerateText", "regenerateImage", "regenerateBoth", "schedule", "markPosted"]),
+  action: z.enum(["approve", "reject", "regenerateText", "regenerateImage", "regenerateBoth", "schedule", "markPosted", "publishNow"]),
   schedule: z
     .object({
       mode: z.enum(["default", "exact", "range"]),
@@ -21,6 +21,30 @@ const actionSchema = z.object({
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const payload = actionSchema.parse(await request.json());
+
+  if (payload.action === "publishNow") {
+    // We need to import publishToLinkedIn and handle it here.
+    // Since updateDraft is a sync updater, we'll handle the async call outside or use a different pattern.
+    const { getStoreSnapshot } = await import("@/lib/store");
+    const { publishToLinkedIn } = await import("@/lib/linkedin");
+    const snapshot = await getStoreSnapshot();
+    const draft = snapshot.drafts.find(d => d.id === id);
+    if (!draft) return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    
+    try {
+      await publishToLinkedIn(draft);
+      const nextSnapshot = await updateDraft(id, (d) => ({
+        ...d,
+        status: "posted",
+        postedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+      return NextResponse.json(nextSnapshot);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
 
   const snapshot = await updateDraft(id, (draft, currentSnapshot) => {
     const now = new Date().toISOString();

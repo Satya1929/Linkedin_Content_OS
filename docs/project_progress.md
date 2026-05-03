@@ -1,9 +1,9 @@
 # Project Progress: LinkedIn Content Engine
 
 ## Current Status
-- **Phase**: 6 (Visuals and Carousels)
-- **Completion**: 100%
-- **Overall Completion**: ~75%
+- **Phase**: 8 (SaaS Readiness)
+- **Completion**: 10%
+- **Overall Completion**: ~85%
 
 ## Completed Phases
 - **Phase 0**: Repo and Environment Foundation (100%)
@@ -17,15 +17,20 @@
 - [x] Structured visual concepts (workflow, comparison, pattern-breaker).
 - [x] 7-slide carousel outlines with visual notes.
 - [x] Dashboard display for visual concepts.
-- [x] Copy buttons for image prompts and carousel markdown.
-- [x] Tests added for the visual workflow.
-- [x] Verification (lint, test, build).
-- [x] Restart local server and smoke test.
-- [x] Commit Phase 6.
+- **Phase 6**: Visuals and Carousels (100%)
 
-## Next Phases
-- **Phase 7**: LinkedIn API (OAuth, Posting, Analytics).
-- **Phase 8**: SaaS Readiness (Auth, Billing, Multi-tenant).
+## Completed Phase: Phase 7 (LinkedIn API)
+- [x] LinkedIn OAuth flow (start/callback).
+- [x] LinkedIn API connector (token exchange, posting, analytics).
+- [x] Dashboard integration (connect button, status indicator).
+- [x] "Publish Now" action for drafts.
+- [x] LinkedIn Analytics sync.
+
+## Current Phase: Phase 8 (SaaS Readiness)
+- [ ] Multi-tenant workspace/profile support in store.
+- [ ] Profile switcher in UI.
+- [ ] Simple Auth simulation.
+- [ ] Usage limits and mock billing dashboard.
 
 ## Tech Stack
 - **Frontend**: Next.js (App Router), Tailwind CSS, shadcn/ui.
