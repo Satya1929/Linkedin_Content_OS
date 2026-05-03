@@ -71,6 +71,17 @@ export type SimilarityReport = {
 export type CarouselSlide = {
   title: string;
   body: string;
+  visualNote?: string;
+};
+
+export type VisualConcept = {
+  id: string;
+  type: "workflow" | "diagram" | "comparison" | "pattern-breaker";
+  title: string;
+  prompt: string;
+  negativePrompt: string;
+  layout: string;
+  style: string;
 };
 
 export type DraftLocks = {
@@ -94,6 +105,7 @@ export type Draft = {
   cta?: string;
   body: string;
   imagePrompt?: string;
+  visualConcepts: VisualConcept[];
   carouselOutline: CarouselSlide[];
   sources: SourceItem[];
   qualityScore: QualityScore;

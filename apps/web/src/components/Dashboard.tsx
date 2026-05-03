@@ -18,6 +18,7 @@ import {
   Unlock
 } from "lucide-react";
 import type { ContentFormat, Draft, DraftLocks, NewsCluster, NewsDigest, PerformanceInsight, StoreSnapshot } from "@/lib/types";
+import { carouselToMarkdown } from "@/lib/visuals";
 
 type Props = {
   initialSnapshot: StoreSnapshot;
@@ -373,6 +374,38 @@ export function Dashboard({ initialSnapshot }: Props) {
                     <h2>Image prompt</h2>
                   </div>
                   <p>{selectedDraft.imagePrompt}</p>
+                  <div className="action-row compact">
+                    <button onClick={() => navigator.clipboard.writeText(selectedDraft.imagePrompt ?? "")}>
+                      <Copy size={15} />
+                      Copy image prompt
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {selectedDraft.visualConcepts?.length ? (
+                <div className="asset-band">
+                  <div className="section-heading">
+                    <ImageIcon size={18} />
+                    <h2>Visual concepts</h2>
+                  </div>
+                  <div className="visual-grid">
+                    {selectedDraft.visualConcepts.map((concept) => (
+                      <article className="visual-concept" key={concept.id}>
+                        <strong>{concept.title}</strong>
+                        <small>{concept.type} · {concept.layout}</small>
+                        <p>{concept.prompt}</p>
+                        <details>
+                          <summary>Negative prompt</summary>
+                          <p>{concept.negativePrompt}</p>
+                        </details>
+                        <button onClick={() => navigator.clipboard.writeText(`${concept.prompt}\n\nNegative prompt: ${concept.negativePrompt}`)}>
+                          <Copy size={15} />
+                          Copy concept
+                        </button>
+                      </article>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 
@@ -387,9 +420,16 @@ export function Dashboard({ initialSnapshot }: Props) {
                       <li key={`${slide.title}-${index}`}>
                         <strong>{slide.title}</strong>
                         <span>{slide.body}</span>
+                        {slide.visualNote ? <em>{slide.visualNote}</em> : null}
                       </li>
                     ))}
                   </ol>
+                  <div className="action-row compact">
+                    <button onClick={() => navigator.clipboard.writeText(carouselToMarkdown(selectedDraft.carouselOutline))}>
+                      <Copy size={15} />
+                      Copy carousel outline
+                    </button>
+                  </div>
                 </div>
               ) : null}
 

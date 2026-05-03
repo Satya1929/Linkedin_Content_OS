@@ -4,6 +4,7 @@ import { compactText, keywordSummary, titleCase } from "./text";
 import type { CreateDraftInput, Draft, DraftLocks, StoreSnapshot } from "./types";
 import { buildGenerationSystemPrompt, createOllamaProvider } from "./providers";
 import { loadPromptBundle } from "./prompts";
+import { buildCarouselOutline, buildVisualConcepts, primaryImagePrompt } from "./visuals";
 
 const defaultLocks: DraftLocks = {
   hook: false,
@@ -111,39 +112,6 @@ async function buildDraftPartsWithProvider(rawText: string, sourceTitles: string
   }
 }
 
-function buildImagePrompt(topic: string) {
-  return [
-    `Create a clean LinkedIn visual explaining "${topic}" as a practical AI builder workflow.`,
-    "Use a high-contrast diagram style, one central idea, minimal text, and a clear before-to-after flow.",
-    "Avoid stock photography, hype language, and tiny unreadable labels."
-  ].join(" ");
-}
-
-function buildCarousel(topic: string) {
-  return [
-    {
-      title: `${topic}: the hidden builder signal`,
-      body: "Open with the practical change, not the announcement."
-    },
-    {
-      title: "What changed",
-      body: "Name the capability, workflow, or constraint that shifted."
-    },
-    {
-      title: "Why developers should care",
-      body: "Connect it to prototyping, evaluation, automation, or product quality."
-    },
-    {
-      title: "What to test next",
-      body: "Turn the idea into a small experiment or decision rule."
-    },
-    {
-      title: "Career signal",
-      body: "Show how understanding this makes you more useful on AI teams."
-    }
-  ];
-}
-
 export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapshot): Promise<Draft> {
   const sources = input.sourceItems?.length ? input.sourceItems : await buildSourceItems(input.rawText, input.sourceLinks);
   const sourceTitles = sources.filter((source) => source.sourceType !== "raw-context").map((source) => source.title);
@@ -153,6 +121,8 @@ export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapsh
   const similarity = calculateSimilarity(body, snapshot.drafts);
   const fingerprints = buildFingerprints(parts);
   const topic = topicFromInput(`${input.rawText} ${sourceTitles.join(" ")}`);
+  const visualSeed = `${topic}\n${body}`;
+  const visualConcepts = buildVisualConcepts(visualSeed);
   const now = new Date().toISOString();
 
   return {
@@ -163,8 +133,9 @@ export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapsh
     format: input.format,
     ...parts,
     body,
-    imagePrompt: input.format === "image" || input.format === "mixed" ? buildImagePrompt(topic) : undefined,
-    carouselOutline: input.format === "carousel" || input.format === "mixed" ? buildCarousel(topic) : [],
+    imagePrompt: input.format === "image" || input.format === "mixed" ? primaryImagePrompt(visualSeed) : undefined,
+    visualConcepts,
+    carouselOutline: input.format === "carousel" || input.format === "mixed" ? buildCarouselOutline(visualSeed) : [],
     sources,
     qualityScore,
     similarity,
@@ -200,11 +171,13 @@ export function regenerateDraftText(draft: Draft, snapshot: StoreSnapshot) {
 }
 
 export function regenerateImagePrompt(draft: Draft) {
-  const topic = topicFromInput(`${draft.context} ${draft.insight}`);
+  const topic = `${topicFromInput(`${draft.context} ${draft.insight}`)}\n${draft.body}`;
+  const visualConcepts = buildVisualConcepts(topic);
   return {
     ...draft,
-    imagePrompt: buildImagePrompt(topic),
-    carouselOutline: draft.carouselOutline.length > 0 ? draft.carouselOutline : buildCarousel(topic),
+    imagePrompt: primaryImagePrompt(topic),
+    visualConcepts,
+    carouselOutline: draft.carouselOutline.length > 0 ? draft.carouselOutline : buildCarouselOutline(topic),
     updatedAt: new Date().toISOString()
   };
 }

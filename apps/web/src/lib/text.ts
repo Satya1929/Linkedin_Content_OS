@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 const stopWords = new Set([
   "a",
   "an",
@@ -65,10 +63,6 @@ export function titleCase(value: string) {
 export function fingerprint(value: string, maxTokens = 8) {
   const tokens = Array.from(new Set(tokenize(value))).slice(0, maxTokens);
   return tokens.join("-");
-}
-
-export function hashText(value: string) {
-  return createHash("sha256").update(normalizeText(value)).digest("hex");
 }
 
 export function keywordSummary(value: string, maxTokens = 6) {
