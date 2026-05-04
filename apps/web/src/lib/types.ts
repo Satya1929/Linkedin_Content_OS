@@ -114,7 +114,9 @@ export type Draft = {
   angleFingerprint: string;
   locks: DraftLocks;
   scheduledAt?: string;
+  qstashMessageId?: string;
   postedAt?: string;
+  linkedinPostUrn?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -168,6 +170,7 @@ export type CreatorProfile = {
   timezone: string;
   defaultPostTime: string;
   dailyMinimumPosts: number;
+  linkedinUrn?: string;
   linkedinAccessToken?: string;
   linkedinRefreshToken?: string;
   linkedinExpiresAt?: string;

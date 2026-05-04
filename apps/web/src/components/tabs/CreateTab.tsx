@@ -4,10 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Sparkles, FileText, Image as ImageIcon, RefreshCw,
   Check, ThumbsDown, Lock, Unlock, Copy, CalendarClock,
-  Share2, Send
+  Share2, Send, Trash2
 } from "lucide-react";
 import type { ContentFormat, Draft, DraftLocks, StoreSnapshot } from "@/lib/types";
-import { apiCall } from "../Dashboard";
+import { apiCall } from "@/lib/api";
 import { carouselToMarkdown } from "@/lib/visuals";
 
 type Props = {
@@ -19,16 +19,18 @@ type Props = {
 
 function statusLabel(s: string) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
-function formatDate(v?: string) {
-  if (!v) return "Not set";
-  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(v));
-}
-
 function formatIcon(f: ContentFormat) {
   if (f === "image") return <ImageIcon size={14} />;
   if (f === "carousel") return <FileText size={14} />;
   if (f === "mixed") return <Sparkles size={14} />;
   return <Send size={14} />;
+}
+
+function ClientDate({ value }: { value?: string }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted || !value) return <span>{value ? "Loading..." : "Not set"}</span>;
+  return <span>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(value))}</span>;
 }
 
 export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
@@ -129,7 +131,7 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
           {snapshot.drafts.length === 0 && <p className="text-muted">No drafts yet. Generate one above.</p>}
           <div className="draft-list">
             {snapshot.drafts.map((d) => (
-              <button
+              <div
                 key={d.id}
                 className={`draft-item ${d.id === selectedDraft?.id ? "active" : ""}`}
                 onClick={() => setSelectedId(d.id)}
@@ -137,10 +139,36 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
                 <div className="draft-item-icon">{formatIcon(d.format)}</div>
                 <div className="draft-item-body">
                   <div className="draft-item-hook">{d.hook}</div>
-                  <div className="draft-item-meta">{formatDate(d.createdAt)}</div>
+                  <div className="draft-item-meta"><ClientDate value={d.createdAt} /></div>
                 </div>
-                <span className={`status-badge ${d.status}`}>{statusLabel(d.status)}</span>
-              </button>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                   <span className={`status-badge ${d.status}`}>{statusLabel(d.status)}</span>
+                   <div className="draft-item-actions-inline">
+                     <button 
+                       className="btn-icon-sm" 
+                       onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }} 
+                       title="Edit"
+                     >
+                       <FileText size={12} />
+                     </button>
+                     <button 
+                       className="btn-icon-sm danger" 
+                       onClick={async (e) => { 
+                         e.stopPropagation(); 
+                         console.log("[CREATE] Inline delete clicked for", d.id);
+                         if (window.confirm(`Delete draft: "${d.hook.slice(0, 30)}..."?`)) {
+                           await run("Deleting", () => apiCall(`/api/drafts/${d.id}`, { method: "DELETE" }));
+                           console.log("[CREATE] Delete finished");
+                           if (selectedId === d.id) setSelectedId("");
+                         }
+                       }}
+                       title="Delete"
+                     >
+                       <Trash2 size={12} />
+                     </button>
+                   </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -267,6 +295,20 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
                 <button className="btn" onClick={() => draftAction("regenerateImage")} disabled={Boolean(busy)}><ImageIcon size={14} /> Regenerate visuals</button>
                 <button className="btn btn-green" onClick={() => draftAction("approve")} disabled={Boolean(busy)}><Check size={14} /> Approve</button>
                 <button className="btn btn-danger" onClick={() => draftAction("reject")} disabled={Boolean(busy)}><ThumbsDown size={14} /> Reject</button>
+                <button 
+                  className="btn btn-danger btn-ghost" 
+                  onClick={async () => {
+                    console.log("[CREATE] Main delete clicked for", selectedDraft.id);
+                    if (window.confirm("Are you sure you want to delete this draft?")) {
+                      await run("Deleting draft", () => apiCall(`/api/drafts/${selectedDraft.id}`, { method: "DELETE" }));
+                      console.log("[CREATE] Main delete finished");
+                      setSelectedId("");
+                    }
+                  }} 
+                  disabled={Boolean(busy)}
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
               </div>
             </div>
 
@@ -303,7 +345,7 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
               )}
 
               {selectedDraft.scheduledAt && (
-                <div className="alert info" style={{ marginBottom: 12 }}>📅 Scheduled: {formatDate(selectedDraft.scheduledAt)}</div>
+                <div className="alert info" style={{ marginBottom: 12 }}>📅 Scheduled: <ClientDate value={selectedDraft.scheduledAt} /></div>
               )}
 
               <div className="btn-row">

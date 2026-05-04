@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Newspaper, Sparkles } from "lucide-react";
 import type { NewsCluster, NewsDigest, StoreSnapshot } from "@/lib/types";
-import { apiCall } from "../Dashboard";
+import { apiCall } from "../../lib/api";
 
 type Props = {
   snapshot: StoreSnapshot;

@@ -98,6 +98,14 @@ export function SetupTab({ snapshot, isLinkedInConnected }: Props) {
           <div style={{ display: "flex", gap: 8 }}><span style={{ color: "var(--ink-3)", width: 120 }}>Timezone</span><span>{activeProfile?.timezone}</span></div>
           <div style={{ display: "flex", gap: 8 }}><span style={{ color: "var(--ink-3)", width: 120 }}>Post time</span><span>{activeProfile?.defaultPostTime ?? "10:30"}</span></div>
           <div style={{ display: "flex", gap: 8 }}><span style={{ color: "var(--ink-3)", width: 120 }}>Workspace</span><span>{snapshot.workspaces.find((w) => w.id === snapshot.activeWorkspaceId)?.name}</span></div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <span style={{ color: "var(--ink-3)", width: 120 }}>LinkedIn URN</span>
+            {activeProfile?.linkedinUrn ? (
+              <span className="pill green" style={{ fontSize: 11 }}>{activeProfile.linkedinUrn}</span>
+            ) : (
+              <span className="pill warn" style={{ fontSize: 11 }}>Missing (Reconnect needed)</span>
+            )}
+          </div>
         </div>
       </div>
 

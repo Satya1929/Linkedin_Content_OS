@@ -137,6 +137,59 @@ export function createOllamaProvider(): ModelProvider {
   };
 }
 
+export function createGeminiProvider(): ModelProvider {
+  const apiKey = process.env.GOOGLE_AI_API_KEY || "";
+  const host = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+
+  return {
+    name: "gemini",
+    async available() {
+      return Boolean(apiKey && apiKey !== "YOUR_GEMINI_API_KEY");
+    },
+    async generateText(input) {
+      if (!apiKey) {
+        throw new Error("Google AI API key is not configured.");
+      }
+
+      const response = await fetchWithTimeout(
+        `${host}?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: `${input.system}\n\n${input.prompt}` }]
+              }
+            ],
+            generationConfig: {
+              temperature: input.temperature ?? 0.4,
+              topP: 0.8,
+              topK: 40
+            }
+          })
+        },
+        20000
+      );
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Gemini generation failed: ${error}`);
+      }
+
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    },
+    async embedText(text) {
+      // Basic fallback for now, Google has a separate embedding API if needed
+      return hashEmbedding(text);
+    }
+  };
+}
+
 export function buildGenerationSystemPrompt(bundle: PromptBundle) {
   return [
     "You are the content engine for a local-first LinkedIn authority system.",

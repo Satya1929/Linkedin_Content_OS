@@ -11,3 +11,5 @@ data/*.csv
 !.env.example
 !.gitkeep
 *.log
+
+.vercel

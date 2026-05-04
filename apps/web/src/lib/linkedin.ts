@@ -1,7 +1,7 @@
 import { getStoreSnapshot, saveStoreSnapshot } from "./store";
 import type { Draft, MetricsSnapshot } from "./types";
 
-const LINKEDIN_API_VERSION = "2026-03";
+const LINKEDIN_API_VERSION = "202604";
 
 export type LinkedInProfile = {
   sub: string;
@@ -21,7 +21,8 @@ export async function getLinkedInAuthUrl() {
     throw new Error("Missing LinkedIn client configuration");
   }
 
-  const scope = encodeURIComponent("w_member_social r_liteprofile r_emailaddress");
+  // Updated scopes for modern LinkedIn API
+  const scope = encodeURIComponent("openid profile email w_member_social");
   const state = Math.random().toString(36).substring(7);
   
   return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
@@ -52,15 +53,64 @@ export async function exchangeLinkedInCode(code: string) {
   }
 
   const data = await response.json();
+  console.log("LinkedIn token exchange successful");
+  const accessToken = data.access_token;
   const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
 
+  // 1. Always save the tokens first so we don't lose the connection
   const snapshot = await getStoreSnapshot();
   const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
+  
   if (profile) {
-    profile.linkedinAccessToken = data.access_token;
+    profile.linkedinAccessToken = accessToken;
     profile.linkedinRefreshToken = data.refresh_token;
     profile.linkedinExpiresAt = expiresAt;
     await saveStoreSnapshot(snapshot);
+    console.log("LinkedIn tokens saved to store (pre-profile fetch)");
+  }
+
+  // 2. Try to fetch the URN (we need this for posting)
+  let linkedinUrn = "";
+
+  // Try OpenID Connect first (new way)
+  try {
+    const oidcResponse = await fetch("https://api.linkedin.com/userinfo", {
+      headers: { "Authorization": `Bearer ${accessToken}` },
+    });
+    if (oidcResponse.ok) {
+      const oidcData = await oidcResponse.json();
+      linkedinUrn = oidcData.sub;
+      console.log("URN fetched via OIDC:", linkedinUrn);
+    }
+  } catch (e) {
+    console.error("OIDC fetch failed", e);
+  }
+
+  // If OIDC failed, try the legacy /me endpoint
+  if (!linkedinUrn) {
+    try {
+      const meResponse = await fetch("https://api.linkedin.com/v2/me", {
+        headers: { "Authorization": `Bearer ${accessToken}` },
+      });
+      if (meResponse.ok) {
+        const meData = await meResponse.json();
+        linkedinUrn = meData.id;
+        console.log("URN fetched via Legacy API:", linkedinUrn);
+      }
+    } catch (e) {
+      console.error("Legacy profile fetch failed", e);
+    }
+  }
+
+  // 3. Update the store with the URN if we found it
+  if (linkedinUrn && profile) {
+    const updatedSnapshot = await getStoreSnapshot();
+    const p = updatedSnapshot.creatorProfiles.find(cp => cp.id === profile.id);
+    if (p) {
+      p.linkedinUrn = linkedinUrn;
+      await saveStoreSnapshot(updatedSnapshot);
+      console.log("LinkedIn URN saved to store:", linkedinUrn);
+    }
   }
 
   return data;
@@ -70,13 +120,12 @@ export async function publishToLinkedIn(draft: Draft) {
   const snapshot = await getStoreSnapshot();
   const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
   const token = profile?.linkedinAccessToken;
-  const personId = profile?.id; // Assuming we use personId for posting
+  const linkedinUrn = profile?.linkedinUrn;
 
-  if (!token) {
-    throw new Error("LinkedIn not authenticated");
+  if (!token || !linkedinUrn) {
+    throw new Error("LinkedIn not authenticated or missing profile info");
   }
 
-  // This is a simplified version of the LinkedIn Posts API call
   const response = await fetch("https://api.linkedin.com/rest/posts", {
     method: "POST",
     headers: {
@@ -86,7 +135,7 @@ export async function publishToLinkedIn(draft: Draft) {
       "X-Restli-Protocol-Version": "2.0.0",
     },
     body: JSON.stringify({
-      author: `urn:li:person:${personId}`,
+      author: `urn:li:person:${linkedinUrn}`,
       commentary: draft.body,
       visibility: "PUBLIC",
       distribution: {
@@ -111,13 +160,15 @@ export async function fetchLinkedInAnalytics(postId: string): Promise<MetricsSna
   const snapshot = await getStoreSnapshot();
   const profile = snapshot.creatorProfiles.find(p => p.id === snapshot.activeProfileId);
   const token = profile?.linkedinAccessToken;
+  const linkedinUrn = profile?.linkedinUrn;
 
-  if (!token) {
+  if (!token || !linkedinUrn) {
     return null;
   }
 
-  // Simplified analytics call
-  const response = await fetch(`https://api.linkedin.com/rest/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=urn:li:organization:123&shares=List(${postId})`, {
+  // Note: Organizational analytics require organizational URN. 
+  // For personal shares, we use share statistics.
+  const response = await fetch(`https://api.linkedin.com/rest/shareStatistics?q=shares&shares=List(${postId})`, {
     headers: {
       "Authorization": `Bearer ${token}`,
       "LinkedIn-Version": LINKEDIN_API_VERSION,
@@ -140,7 +191,7 @@ export async function fetchLinkedInAnalytics(postId: string): Promise<MetricsSna
     likes: stats.likeCount || 0,
     comments: stats.commentCount || 0,
     reposts: stats.shareCount || 0,
-    profileViews: 0, // Profile views are not usually in share statistics
+    profileViews: 0,
     raw: data,
   };
 }

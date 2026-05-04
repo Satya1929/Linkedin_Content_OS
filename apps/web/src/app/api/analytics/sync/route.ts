@@ -13,9 +13,9 @@ export async function POST() {
 
     const newMetrics = [];
     for (const draft of postedDrafts) {
-      // In a real app, draft.postedAt would be a LinkedIn post ID or we'd store the post URN.
-      // For now, we mock the ID as the draft ID or a dummy value.
-      const metrics = await fetchLinkedInAnalytics(draft.id);
+      if (!draft.linkedinPostUrn) continue;
+      
+      const metrics = await fetchLinkedInAnalytics(draft.linkedinPostUrn);
       if (metrics) {
         metrics.draftId = draft.id;
         newMetrics.push(metrics);

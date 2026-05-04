@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BarChart3, RefreshCw, Check, ThumbsDown } from "lucide-react";
 import type { PerformanceInsight, StoreSnapshot } from "@/lib/types";
-import { apiCall } from "../Dashboard";
+import { apiCall } from "../../lib/api";
 
 type Props = {
   snapshot: StoreSnapshot;

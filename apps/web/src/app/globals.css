@@ -286,6 +286,30 @@ button, input, textarea, select { font: inherit; }
   min-height: 32px;
 }
 
+.btn-icon-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-icon-sm:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.btn-icon-sm.danger:hover {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
 .btn-row {
   display: flex;
   flex-wrap: wrap;
@@ -353,6 +377,7 @@ button, input, textarea, select { font: inherit; }
   border: 1px solid var(--border);
   background: var(--surface);
   cursor: pointer;
+  user-select: none;
   width: 100%;
   text-align: left;
   transition: all 0.15s ease;
@@ -391,6 +416,17 @@ button, input, textarea, select { font: inherit; }
   font-size: 11px;
   color: var(--ink-3);
   margin-top: 2px;
+}
+
+.draft-item-actions-inline {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.draft-item:hover .draft-item-actions-inline {
+  opacity: 1;
 }
 
 /* ── Status pills ── */
@@ -707,8 +743,49 @@ button, input, textarea, select { font: inherit; }
 
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+/* ── Queue page ── */
+.queue-list { display: flex; flex-direction: column; gap: 12px; }
+.queue-item { display: flex; align-items: center; gap: 24px; }
+.queue-item.compact { gap: 16px; padding: 14px 20px; }
+
+.queue-item-date {
+  display: flex; flex-direction: column; align-items: center;
+  width: 70px; flex-shrink: 0;
+}
+.date-badge {
+  display: flex; flex-direction: column; width: 56px;
+  border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--surface-2);
+}
+.date-badge-top {
+  background: var(--surface-3); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; color: var(--accent-strong);
+  text-align: center; padding: 3px 0; border-bottom: 1px solid var(--border);
+}
+.date-badge-main {
+  font-size: 20px; font-weight: 700; color: var(--ink);
+  text-align: center; padding: 6px 0;
+}
+.time-label { font-size: 11px; color: var(--ink-3); margin-top: 6px; font-weight: 600; }
+
+.queue-item-content { flex: 1; min-width: 0; }
+.queue-item-hook { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.queue-item-body-preview { font-size: 12px; color: var(--ink-2); line-height: 1.5; }
+
+.queue-item-date.compact { width: auto; align-items: flex-start; }
+
+.queue-item .btn-icon-sm {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.queue-item:hover .btn-icon-sm {
+  opacity: 1;
+}
+
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 1fr; }
   .app-nav { display: none; }
   .score-grid, .two-col, .visual-grid { grid-template-columns: 1fr; }
+  .queue-item { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .queue-item-date { flex-direction: row; gap: 12px; width: auto; }
 }

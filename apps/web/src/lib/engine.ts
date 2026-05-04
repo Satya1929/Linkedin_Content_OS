@@ -125,6 +125,25 @@ export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapsh
   const visualConcepts = buildVisualConcepts(visualSeed);
   const now = new Date().toISOString();
 
+  // Initial image prompt
+  let imagePrompt = undefined;
+  if (input.format === "image" || input.format === "mixed") {
+    imagePrompt = primaryImagePrompt(visualSeed);
+    const gemini = createGeminiProvider();
+    if (await gemini.available()) {
+      try {
+        const enhanced = await gemini.generateText({
+          system: "You are a professional visual designer for LinkedIn content.",
+          prompt: `Create a professional image prompt for: ${visualSeed}`,
+          temperature: 0.8
+        });
+        if (enhanced) imagePrompt = enhanced.trim();
+      } catch (e) {
+        console.error("Gemini initial image prompt failed", e);
+      }
+    }
+  }
+
   return {
     id: crypto.randomUUID(),
     workspaceId: snapshot.activeWorkspaceId,
@@ -133,7 +152,7 @@ export async function createDraft(input: CreateDraftInput, snapshot: StoreSnapsh
     format: input.format,
     ...parts,
     body,
-    imagePrompt: input.format === "image" || input.format === "mixed" ? primaryImagePrompt(visualSeed) : undefined,
+    imagePrompt,
     visualConcepts,
     carouselOutline: input.format === "carousel" || input.format === "mixed" ? buildCarouselOutline(visualSeed) : [],
     sources,
@@ -170,12 +189,41 @@ export function regenerateDraftText(draft: Draft, snapshot: StoreSnapshot) {
   };
 }
 
-export function regenerateImagePrompt(draft: Draft) {
+export async function regenerateImagePrompt(draft: Draft) {
   const topic = `${topicFromInput(`${draft.context} ${draft.insight}`)}\n${draft.body}`;
   const visualConcepts = buildVisualConcepts(topic);
+  let imagePrompt = primaryImagePrompt(topic);
+
+  // Use Gemini to enhance the image prompt if available
+  const gemini = createGeminiProvider();
+  if (await gemini.available()) {
+    try {
+      const enhanced = await gemini.generateText({
+        system: "You are a professional visual designer for LinkedIn content.",
+        prompt: `Create a high-quality, professional, and minimalist image prompt for a LinkedIn post.
+        The post topic is: ${topic}
+        
+        Focus on:
+        - Modern technical aesthetic (dark mode, glassmorphism, or clean gradients)
+        - Symbolic representation of AI/Data/Workflows
+        - High contrast and mobile readability
+        - NO text in the image
+        - NO generic stock photo looks
+        
+        Return ONLY the image prompt text under 300 characters.`,
+        temperature: 0.8
+      });
+      if (enhanced) {
+        imagePrompt = enhanced.trim();
+      }
+    } catch (e) {
+      console.error("Gemini image prompt enhancement failed", e);
+    }
+  }
+
   return {
     ...draft,
-    imagePrompt: primaryImagePrompt(topic),
+    imagePrompt,
     visualConcepts,
     carouselOutline: draft.carouselOutline.length > 0 ? draft.carouselOutline : buildCarouselOutline(topic),
     updatedAt: new Date().toISOString()

@@ -1,5 +1,6 @@
 import type { Draft, NewsCluster, NewsDigest, NewsSource, SourceItem } from "./types";
 import { compactText, fingerprint, keywordSummary, normalizeText, tokenize } from "./text";
+import { createGeminiProvider } from "./providers";
 
 export const starterNewsSources: NewsSource[] = [
   {
@@ -286,6 +287,34 @@ export function buildNewsClusters(items: SourceItem[], pastDrafts: Draft[] = [])
 export async function buildNewsDigest(pastDrafts: Draft[] = []): Promise<NewsDigest> {
   const fetched = await fetchNewsSources();
   const clusters = buildNewsClusters(fetched.items, pastDrafts);
+  
+  // Use Gemini to enhance angles if available
+  const gemini = createGeminiProvider();
+  if (await gemini.available()) {
+    console.log("Gemini is available, enhancing news clusters...");
+    await Promise.all(
+      clusters.slice(0, 5).map(async (cluster) => {
+        try {
+          const analysis = await gemini.generateText({
+            system: "You are an expert technical editor for LinkedIn AI builders.",
+            prompt: `Analyze these news items and provide a practical, technical "angle" for a LinkedIn post. 
+            Focus on what a developer should TEST or LEARN next.
+            Return ONLY a single sentence under 160 characters.
+            
+            News items:
+            ${cluster.items.map(i => `- ${i.title}: ${i.summary}`).join("\n")}`,
+            temperature: 0.7
+          });
+          if (analysis) {
+            cluster.angle = analysis.trim();
+          }
+        } catch (e) {
+          console.error("Gemini news enhancement failed for cluster", cluster.title, e);
+        }
+      })
+    );
+  }
+
   return {
     ...fetched,
     clusters

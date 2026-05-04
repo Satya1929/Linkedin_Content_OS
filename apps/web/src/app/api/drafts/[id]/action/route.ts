@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { regenerateDraftText, regenerateImagePrompt } from "@/lib/engine";
 import { resolveSchedule } from "@/lib/scheduling";
-import { updateDraft } from "@/lib/store";
+import { updateDraft, getStoreSnapshot } from "@/lib/store";
+import { schedulePublication, cancelPublication } from "@/lib/qstash";
 
 const actionSchema = z.object({
   action: z.enum(["approve", "reject", "regenerateText", "regenerateImage", "regenerateBoth", "schedule", "markPosted", "publishNow"]),
@@ -32,11 +33,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!draft) return NextResponse.json({ error: "Draft not found" }, { status: 404 });
     
     try {
-      await publishToLinkedIn(draft);
+      const result = await publishToLinkedIn(draft);
+      const postUrn = result.id; // LinkedIn returns the URN in the 'id' field for /rest/posts
+
       const nextSnapshot = await updateDraft(id, (d) => ({
         ...d,
         status: "posted",
         postedAt: new Date().toISOString(),
+        linkedinPostUrn: postUrn,
         updatedAt: new Date().toISOString()
       }));
       return NextResponse.json(nextSnapshot);
@@ -46,23 +50,38 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
   }
 
+  // Get existing draft to check for previous QStash messages
+  const initialSnapshot = await getStoreSnapshot();
+  const existingDraft = initialSnapshot.drafts.find(d => d.id === id);
+
+  let qstashMessageId: string | undefined = undefined;
+  
+  if (payload.action === "schedule") {
+    // If there was an existing message, cancel it
+    if (existingDraft?.qstashMessageId) {
+      await cancelPublication(existingDraft.qstashMessageId);
+    }
+
+    const profile = initialSnapshot.creatorProfiles.find(p => p.id === initialSnapshot.activeProfileId);
+    const scheduledAt = resolveSchedule(payload.schedule ?? { mode: "default" }, profile?.defaultPostTime ?? "10:30");
+    
+    // Schedule new message
+    const newMsgId = await schedulePublication(id, scheduledAt);
+    if (newMsgId) qstashMessageId = newMsgId;
+  } else if (existingDraft?.qstashMessageId) {
+    // If switching away from "scheduled" status, cancel the existing message
+    await cancelPublication(existingDraft.qstashMessageId);
+  }
+
   const snapshot = await updateDraft(id, (draft, currentSnapshot) => {
     const now = new Date().toISOString();
 
     if (payload.action === "approve") {
-      return {
-        ...draft,
-        status: "approved",
-        updatedAt: now
-      };
+      return { ...draft, status: "approved", qstashMessageId: undefined, updatedAt: now };
     }
 
     if (payload.action === "reject") {
-      return {
-        ...draft,
-        status: "rejected",
-        updatedAt: now
-      };
+      return { ...draft, status: "rejected", qstashMessageId: undefined, updatedAt: now };
     }
 
     if (payload.action === "regenerateText") {
@@ -79,10 +98,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
     if (payload.action === "schedule") {
       const profile = currentSnapshot.creatorProfiles.find(p => p.id === currentSnapshot.activeProfileId);
+      const scheduledAt = resolveSchedule(payload.schedule ?? { mode: "default" }, profile?.defaultPostTime ?? "10:30");
       return {
         ...draft,
         status: "scheduled",
-        scheduledAt: resolveSchedule(payload.schedule ?? { mode: "default" }, profile?.defaultPostTime ?? "10:30"),
+        scheduledAt,
+        qstashMessageId,
         updatedAt: now
       };
     }
@@ -91,6 +112,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       ...draft,
       status: "posted",
       postedAt: now,
+      qstashMessageId: undefined,
       updatedAt: now
     };
   });

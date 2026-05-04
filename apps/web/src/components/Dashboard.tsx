@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import {
   LayoutDashboard, Newspaper, BarChart3,
-  Settings, Link2, Sparkles
+  Settings, Link2, Sparkles, CalendarClock
 } from "lucide-react";
 import type { StoreSnapshot } from "@/lib/types";
 import { CreateTab } from "./tabs/CreateTab";
@@ -11,32 +11,25 @@ import { NewsTab } from "./tabs/NewsTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
 import { SetupTab } from "./tabs/SetupTab";
 import { LeadMagnetTab } from "./tabs/LeadMagnetTab";
+import { QueueTab } from "./tabs/QueueTab";
 
-type Tab = "create" | "news" | "analytics" | "leadmagnet" | "setup";
+type Tab = "create" | "news" | "queue" | "analytics" | "leadmagnet" | "setup";
 
 type Props = { initialSnapshot: StoreSnapshot };
 
-type ApiOptions = { method?: "GET" | "POST" | "PATCH"; body?: unknown };
-
-export async function apiCall<T = StoreSnapshot>(path: string, options: ApiOptions = {}): Promise<T> {
-  const response = await fetch(path, {
-    method: options.method ?? "GET",
-    headers: options.body ? { "content-type": "application/json" } : undefined,
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-  if (!response.ok) throw new Error(await response.text());
-  return (await response.json()) as T;
-}
+import { apiCall } from "@/lib/api";
 
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "create",     label: "Create & Drafts",  icon: <LayoutDashboard size={16} /> },
   { id: "news",       label: "News Mode",         icon: <Newspaper size={16} /> },
+  { id: "queue",      label: "Publication Queue", icon: <CalendarClock size={16} /> },
   { id: "analytics",  label: "Analytics",         icon: <BarChart3 size={16} /> },
   { id: "leadmagnet", label: "Lead Magnets",      icon: <Sparkles size={16} /> },
   { id: "setup",      label: "Setup & Config",    icon: <Settings size={16} /> },
 ];
 
 export function Dashboard({ initialSnapshot }: Props) {
+  console.log("[DASHBOARD] Rendering with snapshot version:", initialSnapshot.drafts.length);
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [activeTab, setActiveTab] = useState<Tab>("create");
   const [busy, setBusy] = useState("");
@@ -53,7 +46,9 @@ export function Dashboard({ initialSnapshot }: Props) {
     setBusy(label);
     setError("");
     try {
+      console.log(`[DASHBOARD] Running action: ${label}`);
       const next = await action();
+      console.log("[DASHBOARD] Action success, updating snapshot:", next.drafts.length, "drafts");
       setSnapshot(next);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -65,6 +60,7 @@ export function Dashboard({ initialSnapshot }: Props) {
   const tabLabels: Record<Tab, string> = {
     create: "Create & Drafts",
     news: "News Mode",
+    queue: "Publication Queue & History",
     analytics: "Analytics & Insights",
     leadmagnet: "Lead Magnet Pipeline",
     setup: "Setup & Configuration",
@@ -130,6 +126,7 @@ export function Dashboard({ initialSnapshot }: Props) {
         <div className="tab-content">
           {activeTab === "create"     && <CreateTab     snapshot={snapshot} run={run} busy={busy} isLinkedInConnected={isLinkedInConnected} />}
           {activeTab === "news"       && <NewsTab        snapshot={snapshot} run={run} busy={busy} />}
+          {activeTab === "queue"      && <QueueTab       snapshot={snapshot} run={run} busy={busy} />}
           {activeTab === "analytics"  && <AnalyticsTab   snapshot={snapshot} run={run} busy={busy} isLinkedInConnected={isLinkedInConnected} />}
           {activeTab === "leadmagnet" && <LeadMagnetTab  snapshot={snapshot} run={run} busy={busy} />}
           {activeTab === "setup"      && <SetupTab       snapshot={snapshot} isLinkedInConnected={isLinkedInConnected} />}
