@@ -40,99 +40,51 @@ function hashEmbedding(text: string, dimensions = 64) {
   return vector.map((item) => item / magnitude);
 }
 
-export function createOllamaProvider(): ModelProvider {
-  const host = process.env.OLLAMA_HOST || "http://localhost:11434";
-  const configuredTextModel = process.env.OLLAMA_TEXT_MODEL || "";
-  const configuredEmbedModel = process.env.OLLAMA_EMBED_MODEL || "";
-
-  async function listModels() {
-    try {
-      const response = await fetchWithTimeout(`${host}/api/tags`, undefined, 1500);
-      if (!response.ok) {
-        return [];
-      }
-      const data = (await response.json()) as { models?: Array<{ name?: string }> };
-      return (data.models ?? []).map((model) => model.name).filter((name): name is string => Boolean(name));
-    } catch {
-      return [];
-    }
-  }
-
-  async function resolveModel(preferred: string) {
-    if (preferred) {
-      return preferred;
-    }
-    const models = await listModels();
-    return models[0];
-  }
+export function createOpenRouterProvider(): ModelProvider {
+  const apiKey = process.env.OPENROUTER_API_KEY || "";
+  const model = process.env.OPENROUTER_MODEL || "google/gemini-2.0-flash-lite-preview-02-05:free"; // Default to a free model on OpenRouter
 
   return {
-    name: "ollama",
+    name: "openrouter",
     async available() {
-      return Boolean(await resolveModel(configuredTextModel));
+      return Boolean(apiKey && apiKey !== "YOUR_OPENROUTER_API_KEY");
     },
     async generateText(input) {
-      const textModel = await resolveModel(configuredTextModel);
-      if (!textModel) {
-        throw new Error("No Ollama text model is configured or available.");
+      if (!apiKey) {
+        throw new Error("OpenRouter API key is not configured.");
       }
 
       const response = await fetchWithTimeout(
-        `${host}/api/generate`,
+        "https://openrouter.ai/api/v1/chat/completions",
         {
           method: "POST",
           headers: {
-            "content-type": "application/json"
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000",
+            "X-Title": "LinkedIn Content OS"
           },
           body: JSON.stringify({
-            model: textModel,
-            system: input.system,
-            prompt: input.prompt,
-            stream: false,
-            options: {
-              temperature: input.temperature ?? 0.4
-            }
+            model: model,
+            messages: [
+              { role: "system", content: input.system },
+              { role: "user", content: input.prompt }
+            ],
+            temperature: input.temperature ?? 0.4
           })
         },
         20000
       );
 
       if (!response.ok) {
-        throw new Error(`Ollama generation failed with ${response.status}`);
+        throw new Error(`OpenRouter generation failed with ${response.status}`);
       }
 
-      const data = (await response.json()) as { response?: string };
-      return data.response ?? "";
+      const data = await response.json();
+      return data.choices?.[0]?.message?.content ?? "";
     },
     async embedText(text) {
-      try {
-        const embedModel = (await resolveModel(configuredEmbedModel)) ?? (await resolveModel(configuredTextModel));
-        if (!embedModel) {
-          return hashEmbedding(text);
-        }
-
-        const response = await fetchWithTimeout(
-          `${host}/api/embeddings`,
-          {
-            method: "POST",
-            headers: {
-              "content-type": "application/json"
-            },
-            body: JSON.stringify({
-              model: embedModel,
-              prompt: text
-            })
-          },
-          12000
-        );
-        if (!response.ok) {
-          return hashEmbedding(text);
-        }
-        const data = (await response.json()) as { embedding?: number[] };
-        return data.embedding ?? hashEmbedding(text);
-      } catch {
-        return hashEmbedding(text);
-      }
+      return hashEmbedding(text);
     }
   };
 }
@@ -184,10 +136,85 @@ export function createGeminiProvider(): ModelProvider {
       return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     },
     async embedText(text) {
-      // Basic fallback for now, Google has a separate embedding API if needed
+    // Basic fallback for now, Google has a separate embedding API if needed
+    return hashEmbedding(text);
+  }
+};
+}
+
+export function createOllamaProvider(): ModelProvider {
+const host = process.env.OLLAMA_HOST || "http://localhost:11434";
+const textModel = process.env.OLLAMA_TEXT_MODEL || "llama3.1:latest";
+const embedModel = process.env.OLLAMA_EMBED_MODEL || "mxbai-embed-large";
+
+return {
+  name: "ollama",
+  async available() {
+    try {
+      const response = await fetchWithTimeout(`${host}/api/tags`);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  },
+  async generateText(input) {
+    const response = await fetchWithTimeout(`${host}/api/generate`, {
+      method: "POST",
+      body: JSON.stringify({
+        model: textModel,
+        system: input.system,
+        prompt: input.prompt,
+        stream: false,
+        options: {
+          temperature: input.temperature ?? 0.4
+        }
+      })
+    }, 60000); // 60s timeout for local LLM
+
+    if (!response.ok) {
+      throw new Error(`Ollama generation failed with ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response ?? "";
+  },
+  async embedText(text) {
+    try {
+      const response = await fetchWithTimeout(`${host}/api/embeddings`, {
+        method: "POST",
+        body: JSON.stringify({
+          model: embedModel,
+          prompt: text
+        })
+      });
+
+      if (!response.ok) return hashEmbedding(text);
+      const data = await response.json();
+      return data.embedding ?? hashEmbedding(text);
+    } catch {
       return hashEmbedding(text);
     }
-  };
+  }
+};
+}
+
+export async function createDefaultProvider(): Promise<ModelProvider> {
+const gemini = createGeminiProvider();
+if (await gemini.available()) return gemini;
+
+const openrouter = createOpenRouterProvider();
+if (await openrouter.available()) return openrouter;
+
+const ollama = createOllamaProvider();
+if (await ollama.available()) return ollama;
+
+// Fallback provider that doesn't do anything but won't crash
+return {
+  name: "fallback",
+  available: async () => true,
+  generateText: async () => "",
+  embedText: async (text) => hashEmbedding(text)
+};
 }
 
 export function buildGenerationSystemPrompt(bundle: PromptBundle) {

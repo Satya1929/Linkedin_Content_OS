@@ -40,11 +40,13 @@ export function tokenize(value: string) {
     .filter((token) => token.length > 2 && !stopWords.has(token));
 }
 
-export function extractUrls(value: string) {
+export function extractUrls(value: string | undefined | null) {
+  if (!value) return [];
   return Array.from(new Set(value.match(/https?:\/\/[^\s)]+/g) ?? []));
 }
 
-export function compactText(value: string, maxLength = 220) {
+export function compactText(value: string | undefined | null, maxLength = 220) {
+  if (!value) return "";
   const normalized = value.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) {
     return normalized;

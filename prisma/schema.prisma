@@ -28,6 +28,7 @@ model Workspace {
   id        String   @id @default(cuid())
   name      String
   createdAt DateTime @default(now())
+  billing   Json?
   profiles  CreatorProfile[]
   drafts    Draft[]
 }
@@ -38,6 +39,9 @@ model CreatorProfile {
   name                  String
   positioning           String
   timezone              String   @default("Asia/Kolkata")
+  defaultPostTime       String   @default("10:30")
+  dailyMinimumPosts     Int      @default(1)
+  linkedinUrn           String?
   linkedinAccessToken   String?
   linkedinRefreshToken  String?
   linkedinExpiresAt     DateTime?
@@ -91,14 +95,18 @@ model Draft {
   cta                  String?
   body                 String
   imagePrompt          String?
+  visualConcepts       Json?
   carouselOutline      Json?
   qualityScore         Int
   similarityScore      Float         @default(0)
   similarityWarning    Boolean       @default(false)
   topicFingerprint     String
   angleFingerprint     String
+  locks                Json?
   scheduledAt          DateTime?
+  qstashMessageId      String?
   postedAt             DateTime?
+  linkedinPostUrn      String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   workspace            Workspace     @relation(fields: [workspaceId], references: [id])
@@ -132,6 +140,7 @@ model MetricsSnapshot {
   id          String   @id @default(cuid())
   draftId     String?
   capturedAt  DateTime @default(now())
+  publishedAt DateTime?
   impressions Int
   likes       Int
   comments    Int
@@ -157,4 +166,16 @@ model EmbeddingRecord {
   vector     Unsupported("vector(384)")?
   textHash   String
   createdAt  DateTime @default(now())
+}
+
+model LeadMagnet {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  productIdea     String
+  pdfOutline      Json
+  postSequence    Json
+  ctaLink         String
+  conversionNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

@@ -1,14 +1,29 @@
 {
-  "name": "web",
+  "name": "linkedin-content-os",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "next build",
+    "build": "prisma generate --schema=../../prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint ."
   },
   "dependencies": {
-    "@upstash/qstash": "^2.10.1"
+    "@upstash/qstash": "^2.10.1",
+    "next": "^15.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "lucide-react": "^0.488.0",
+    "zod": "^3.24.3",
+    "@prisma/client": "^6.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "typescript": "^5.8.3",
+    "prisma": "^6.6.0",
+    "eslint": "^9.24.0",
+    "eslint-config-next": "^15.3.1"
   }
 }

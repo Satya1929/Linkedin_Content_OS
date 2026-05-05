@@ -2,7 +2,7 @@ import { buildSourceItems } from "./source";
 import { buildBody, buildFingerprints, calculateSimilarity, scoreDraftParts } from "./scoring";
 import { compactText, keywordSummary, titleCase } from "./text";
 import type { CreateDraftInput, Draft, DraftLocks, StoreSnapshot } from "./types";
-import { buildGenerationSystemPrompt, createOllamaProvider } from "./providers";
+import { buildGenerationSystemPrompt, createOllamaProvider, createGeminiProvider, createDefaultProvider } from "./providers";
 import { loadPromptBundle } from "./prompts";
 import { buildCarouselOutline, buildVisualConcepts, primaryImagePrompt } from "./visuals";
 
@@ -88,9 +88,9 @@ function parseGeneratedParts(value: string) {
 
 async function buildDraftPartsWithProvider(rawText: string, sourceTitles: string[]) {
   const fallback = buildDraftParts(rawText, sourceTitles);
-  const provider = createOllamaProvider();
+  const provider = await createDefaultProvider();
 
-  if (!(await provider.available())) {
+  if (!(await provider.available()) && provider.name !== "fallback") {
     return fallback;
   }
 

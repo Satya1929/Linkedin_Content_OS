@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getStoreSnapshot, saveStoreSnapshot, patchDraft } from "@/lib/store";
+import { getStoreSnapshot, patchDraft, deleteDraft } from "@/lib/store";
 import { cancelPublication } from "@/lib/qstash";
 
 const patchDraftSchema = z.object({
@@ -47,7 +47,6 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
     await cancelPublication(draft.qstashMessageId);
   }
 
-  snapshot.drafts = snapshot.drafts.filter((d) => d.id !== id);
-  await saveStoreSnapshot(snapshot);
-  return NextResponse.json(snapshot);
+  const updatedSnapshot = await deleteDraft(id);
+  return NextResponse.json(updatedSnapshot);
 }

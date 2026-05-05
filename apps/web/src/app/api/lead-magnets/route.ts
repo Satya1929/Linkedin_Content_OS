@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStoreSnapshot, saveStoreSnapshot } from "@/lib/store";
-import { createOllamaProvider, buildGenerationSystemPrompt } from "@/lib/providers";
+import { createDefaultProvider, buildGenerationSystemPrompt } from "@/lib/providers";
 import { loadPromptBundle } from "@/lib/prompts";
 
 export async function POST(request: Request) {
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const { idea, ctaLink } = await request.json();
     const snapshot = await getStoreSnapshot();
 
-    const provider = createOllamaProvider();
+    const provider = await createDefaultProvider();
     const bundle = await loadPromptBundle();
     
     let pdfOutline = ["1. Introduction to " + idea, "2. Core Concept", "3. Step-by-Step Implementation", "4. Advanced Workflow", "5. Summary"];

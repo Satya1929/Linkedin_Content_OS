@@ -73,7 +73,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     await cancelPublication(existingDraft.qstashMessageId);
   }
 
-  const snapshot = await updateDraft(id, (draft, currentSnapshot) => {
+  const snapshot = await updateDraft(id, async (draft, currentSnapshot) => {
     const now = new Date().toISOString();
 
     if (payload.action === "approve") {
@@ -85,15 +85,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     if (payload.action === "regenerateText") {
-      return regenerateDraftText(draft, currentSnapshot);
+      return await regenerateDraftText(draft, currentSnapshot);
     }
 
     if (payload.action === "regenerateImage") {
-      return regenerateImagePrompt(draft);
+      return await regenerateImagePrompt(draft);
     }
 
     if (payload.action === "regenerateBoth") {
-      return regenerateImagePrompt(regenerateDraftText(draft, currentSnapshot));
+      const updatedTextDraft = await regenerateDraftText(draft, currentSnapshot);
+      return await regenerateImagePrompt(updatedTextDraft);
     }
 
     if (payload.action === "schedule") {

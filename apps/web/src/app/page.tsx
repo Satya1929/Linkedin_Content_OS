@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { Dashboard } from "@/components/Dashboard";
 import { getStoreSnapshot } from "@/lib/store";
 
