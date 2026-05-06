@@ -142,71 +142,12 @@ export function createGeminiProvider(): ModelProvider {
 };
 }
 
-export function createOllamaProvider(): ModelProvider {
-const host = process.env.OLLAMA_HOST || "http://localhost:11434";
-const textModel = process.env.OLLAMA_TEXT_MODEL || "llama3.1:latest";
-const embedModel = process.env.OLLAMA_EMBED_MODEL || "mxbai-embed-large";
-
-return {
-  name: "ollama",
-  async available() {
-    try {
-      const response = await fetchWithTimeout(`${host}/api/tags`);
-      return response.ok;
-    } catch {
-      return false;
-    }
-  },
-  async generateText(input) {
-    const response = await fetchWithTimeout(`${host}/api/generate`, {
-      method: "POST",
-      body: JSON.stringify({
-        model: textModel,
-        system: input.system,
-        prompt: input.prompt,
-        stream: false,
-        options: {
-          temperature: input.temperature ?? 0.4
-        }
-      })
-    }, 60000); // 60s timeout for local LLM
-
-    if (!response.ok) {
-      throw new Error(`Ollama generation failed with ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.response ?? "";
-  },
-  async embedText(text) {
-    try {
-      const response = await fetchWithTimeout(`${host}/api/embeddings`, {
-        method: "POST",
-        body: JSON.stringify({
-          model: embedModel,
-          prompt: text
-        })
-      });
-
-      if (!response.ok) return hashEmbedding(text);
-      const data = await response.json();
-      return data.embedding ?? hashEmbedding(text);
-    } catch {
-      return hashEmbedding(text);
-    }
-  }
-};
-}
-
 export async function createDefaultProvider(): Promise<ModelProvider> {
 const gemini = createGeminiProvider();
 if (await gemini.available()) return gemini;
 
 const openrouter = createOpenRouterProvider();
 if (await openrouter.available()) return openrouter;
-
-const ollama = createOllamaProvider();
-if (await ollama.available()) return ollama;
 
 // Fallback provider that doesn't do anything but won't crash
 return {

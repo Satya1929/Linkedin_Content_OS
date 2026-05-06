@@ -21,7 +21,7 @@ function hasActionVerb(value: string) {
 
 function specificityScore(value: string) {
   let score = 45;
-  if (/\b(api|model|agent|workflow|repo|paper|prompt|embedding|eval|developer|github|local|ollama|linkedin)\b/i.test(value)) {
+  if (/\b(api|model|agent|workflow|repo|paper|prompt|embedding|eval|developer|github|local|linkedin)\b/i.test(value)) {
     score += 25;
   }
   if (/\d/.test(value)) {

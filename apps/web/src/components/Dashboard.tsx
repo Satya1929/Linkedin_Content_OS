@@ -9,11 +9,12 @@ import type { StoreSnapshot } from "@/lib/types";
 import { CreateTab } from "./tabs/CreateTab";
 import { NewsTab } from "./tabs/NewsTab";
 import { AnalyticsTab } from "./tabs/AnalyticsTab";
-import { SetupTab } from "./tabs/SetupTab";
 import { LeadMagnetTab } from "./tabs/LeadMagnetTab";
 import { QueueTab } from "./tabs/QueueTab";
 
-type Tab = "create" | "news" | "queue" | "analytics" | "leadmagnet" | "setup";
+
+type Tab = "create" | "news" | "queue" | "analytics" | "leadmagnet";
+
 
 type Props = { initialSnapshot: StoreSnapshot };
 
@@ -25,7 +26,6 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "queue",      label: "Publication Queue", icon: <CalendarClock size={16} /> },
   { id: "analytics",  label: "Analytics",         icon: <BarChart3 size={16} /> },
   { id: "leadmagnet", label: "Lead Magnets",      icon: <Sparkles size={16} /> },
-  { id: "setup",      label: "Setup & Config",    icon: <Settings size={16} /> },
 ];
 
 export function Dashboard({ initialSnapshot }: Props) {
@@ -63,7 +63,6 @@ export function Dashboard({ initialSnapshot }: Props) {
     queue: "Publication Queue & History",
     analytics: "Analytics & Insights",
     leadmagnet: "Lead Magnet Pipeline",
-    setup: "Setup & Configuration",
   };
 
   return (
@@ -92,12 +91,29 @@ export function Dashboard({ initialSnapshot }: Props) {
         </div>
 
         <div className="nav-bottom">
-          <div className={`linkedin-badge ${isLinkedInConnected ? "connected" : "disconnected"}`}>
+          <div className="nav-section-label">Account</div>
+          <div className={`linkedin-badge ${isLinkedInConnected ? "connected" : "disconnected"}`} style={{ padding: '12px', background: 'var(--surface-2)', borderRadius: 'var(--radius)' }}>
             <div className="linkedin-badge-dot" />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 12 }}>LinkedIn</div>
-              <div style={{ fontSize: 11 }}>{isLinkedInConnected ? "Connected" : "Not connected"}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>LinkedIn</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>{isLinkedInConnected ? "Authenticated" : "Not connected"}</div>
             </div>
+          </div>
+          
+          <div style={{ marginTop: '12px' }}>
+            {!isLinkedInConnected ? (
+              <a href="/api/linkedin/oauth/start" style={{ textDecoration: "none", width: '100%' }}>
+                <button className="btn btn-primary" style={{ width: '100%', fontSize: '12px', padding: '6px 12px' }}>
+                  <Link2 size={14} /> Connect Profile
+                </button>
+              </a>
+            ) : (
+              <a href="/api/linkedin/oauth/start" style={{ textDecoration: "none", width: '100%' }}>
+                <button className="btn btn-ghost" style={{ width: '100%', fontSize: '11px', padding: '6px 12px' }}>
+                  <Settings size={13} /> Reconnect
+                </button>
+              </a>
+            )}
           </div>
         </div>
       </nav>
@@ -108,12 +124,9 @@ export function Dashboard({ initialSnapshot }: Props) {
           <div className="app-topbar-title">{tabLabels[activeTab]}</div>
           <div className="topbar-actions">
             <span className="pill">{snapshot.drafts.length} drafts</span>
-            {isLinkedInConnected && <span className="pill green"><Link2 size={12} /> LinkedIn</span>}
-            {!isLinkedInConnected && (
-              <a href="/api/linkedin/oauth/start" style={{ textDecoration: "none" }}>
-                <span className="pill warn"><Link2 size={12} /> Connect LinkedIn</span>
-              </a>
-            )}
+            <span className={`pill ${isLinkedInConnected ? 'green' : 'warn'}`}>
+              <Link2 size={12} /> {isLinkedInConnected ? 'LinkedIn Live' : 'Offline'}
+            </span>
           </div>
         </header>
 
@@ -129,7 +142,6 @@ export function Dashboard({ initialSnapshot }: Props) {
           {activeTab === "queue"      && <QueueTab       snapshot={snapshot} run={run} busy={busy} />}
           {activeTab === "analytics"  && <AnalyticsTab   snapshot={snapshot} run={run} busy={busy} isLinkedInConnected={isLinkedInConnected} />}
           {activeTab === "leadmagnet" && <LeadMagnetTab  snapshot={snapshot} run={run} busy={busy} />}
-          {activeTab === "setup"      && <SetupTab       snapshot={snapshot} isLinkedInConnected={isLinkedInConnected} />}
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@ import { buildSourceItems } from "./source";
 import { buildBody, buildFingerprints, calculateSimilarity, scoreDraftParts } from "./scoring";
 import { compactText, keywordSummary, titleCase } from "./text";
 import type { CreateDraftInput, Draft, DraftLocks, StoreSnapshot } from "./types";
-import { buildGenerationSystemPrompt, createOllamaProvider, createGeminiProvider, createDefaultProvider } from "./providers";
+import { buildGenerationSystemPrompt, createGeminiProvider, createDefaultProvider } from "./providers";
+
 import { loadPromptBundle } from "./prompts";
 import { buildCarouselOutline, buildVisualConcepts, primaryImagePrompt } from "./visuals";
 
