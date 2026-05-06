@@ -7,8 +7,8 @@ Local-first LinkedIn content system for AI and developer authority building.
 - Local web dashboard
 - Raw context and article-link draft generation
 - Markdown prompt rules
-- Local model provider abstraction with Ollama-compatible detection
-- Deterministic fallback when no local model is available
+- Cloud-first model provider abstraction (Gemini, OpenRouter)
+- Deterministic fallback for high reliability
 - Quality scoring and similarity warning
 - Draft approval/rejection/editing
 - Manual scheduling and publishing export
@@ -38,9 +38,8 @@ npm.cmd run prisma:generate
 
 The app currently uses a local JSON store for immediate usability. The Prisma schema is included so the durable Postgres path can be adopted phase by phase.
 
-## Local Model Setup
-
-The app checks `OLLAMA_HOST` and falls back to deterministic generation if Ollama is not reachable. It does not download models.
+## AI Models
+The app uses Google Gemini and OpenRouter for high-quality content generation and visual conceptualization. Ensure your API keys are configured in the `.env` file.
 
 ## LinkedIn
 

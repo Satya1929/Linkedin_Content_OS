@@ -40,7 +40,7 @@
 - **Frontend**: Next.js (App Router), Tailwind CSS, shadcn/ui.
 - **Backend**: Next.js API Routes, Prisma.
 - **Database**: PostgreSQL + pgvector (Dockerized).
-- **Local LLM**: Ollama (Dynamic detection).
+- **LLM**: Google Gemini / OpenRouter (Cloud-first).
 - **Persistence**: Local JSON for MVP, Postgres for durable path.
 
 ## Codex-Native Leverage
