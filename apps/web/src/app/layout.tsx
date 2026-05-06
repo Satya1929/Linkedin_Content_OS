@@ -9,10 +9,16 @@ export const metadata: Metadata = {
   description: "Local-first AI authority content system for LinkedIn."
 };
 
+import { Providers } from "@/components/Providers";
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

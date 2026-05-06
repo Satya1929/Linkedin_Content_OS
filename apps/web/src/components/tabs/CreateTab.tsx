@@ -9,6 +9,8 @@ import {
 import type { ContentFormat, Draft, DraftLocks, StoreSnapshot } from "@/lib/types";
 import { apiCall } from "@/lib/api";
 import { carouselToMarkdown } from "@/lib/visuals";
+import { useToast } from "../Toast";
+
 
 type Props = {
   snapshot: StoreSnapshot;
@@ -34,9 +36,11 @@ function ClientDate({ value }: { value?: string }) {
 }
 
 export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
+  const { toast } = useToast();
   const [rawText, setRawText] = useState("");
   const [sourceLink, setSourceLink] = useState("");
   const [format, setFormat] = useState<ContentFormat>("text");
+
   const [selectedId, setSelectedId] = useState(snapshot.drafts[0]?.id ?? "");
   const [scheduleMode, setScheduleMode] = useState<"default" | "exact" | "range">("default");
   const [scheduleDate, setScheduleDate] = useState("");
@@ -57,7 +61,8 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
   // Sync selectedId when new draft arrives
   useEffect(() => {
     if (snapshot.drafts[0] && !selectedId) setSelectedId(snapshot.drafts[0].id);
-  }, [snapshot.drafts, selectedId]);
+  }, [snapshot.drafts]);
+
 
   async function createDraft() {
     await run("Generating draft", async () => {
@@ -90,7 +95,14 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
   function toggleLock(key: keyof DraftLocks) {
     if (!selectedDraft) return;
     void patchDraft({ locks: { ...selectedDraft.locks, [key]: !selectedDraft.locks[key] } });
+    toast(`${selectedDraft.locks[key] ? "Unlocked" : "Locked"} ${key}`, "info");
   }
+
+  function copyToClipboard(text: string, label: string) {
+    navigator.clipboard.writeText(text);
+    toast(`${label} copied to clipboard`, "success");
+  }
+
 
   return (
     <div className="two-col" style={{ gap: 24, alignItems: "flex-start" }}>
@@ -120,10 +132,17 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
               <option value="mixed">Mixed (text + image)</option>
             </select>
           </label>
-          <button className="btn btn-primary" onClick={createDraft} disabled={!rawText.trim() || Boolean(busy)} style={{ width: "100%" }}>
-            <Sparkles size={16} /> Generate Draft
+          <button 
+            className={`btn btn-primary ${busy ? 'busy' : ''}`} 
+            onClick={createDraft} 
+            disabled={!rawText.trim() || Boolean(busy)} 
+            style={{ width: "100%" }}
+          >
+            {busy === "Generating draft" ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            {busy === "Generating draft" ? "Creating Magic..." : "Generate Authority Draft"}
           </button>
         </div>
+
 
         {/* Draft inbox */}
         <div style={{ marginTop: 20 }}>
@@ -227,9 +246,17 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
 
             {/* Post preview */}
             <div className="block">
-              <div className="block-title"><Send size={14} /> Full post preview</div>
+              <div className="block-title justify-between w-full">
+                <div className="flex items-center gap-2"><Send size={14} /> Full post preview</div>
+                <div className={`text-xs ${selectedDraft.body.length > 3000 ? 'text-danger' : 'text-ink-3'}`}>
+                  {selectedDraft.body.length} / 3000 chars
+                </div>
+              </div>
               <div className="post-preview">
                 <pre>{selectedDraft.body}</pre>
+                <button className="btn btn-ghost btn-icon-sm" onClick={() => copyToClipboard(selectedDraft.body, "Full post")} style={{ position: 'absolute', top: 12, right: 12 }}>
+                  <Copy size={12} />
+                </button>
               </div>
             </div>
 
@@ -287,27 +314,28 @@ export function CreateTab({ snapshot, run, busy, isLinkedInConnected }: Props) {
               </div>
             )}
 
-            {/* Action row */}
             <div className="block">
-              <div className="block-title">Draft Actions</div>
+              <div className="block-title">Refine & Finalize</div>
               <div className="btn-row">
-                <button className="btn" onClick={() => draftAction("regenerateText")} disabled={Boolean(busy)}><RefreshCw size={14} /> Regenerate text</button>
-                <button className="btn" onClick={() => draftAction("regenerateImage")} disabled={Boolean(busy)}><ImageIcon size={14} /> Regenerate visuals</button>
-                <button className="btn btn-green" onClick={() => draftAction("approve")} disabled={Boolean(busy)}><Check size={14} /> Approve</button>
-                <button className="btn btn-danger" onClick={() => draftAction("reject")} disabled={Boolean(busy)}><ThumbsDown size={14} /> Reject</button>
-                <button 
-                  className="btn btn-danger btn-ghost" 
-                  onClick={async () => {
-                    console.log("[CREATE] Main delete clicked for", selectedDraft.id);
-                    if (window.confirm("Are you sure you want to delete this draft?")) {
-                      await run("Deleting draft", () => apiCall(`/api/drafts/${selectedDraft.id}`, { method: "DELETE" }));
-                      console.log("[CREATE] Main delete finished");
-                      setSelectedId("");
-                    }
-                  }} 
-                  disabled={Boolean(busy)}
-                >
-                  <Trash2 size={14} /> Delete
+                <button className="btn" onClick={() => draftAction("regenerateText")} disabled={Boolean(busy)}>
+                  <RefreshCw size={14} className={busy === "regenerateText" ? "animate-spin" : ""} /> 
+                  Improve Writing
+                </button>
+                <button className="btn" onClick={() => draftAction("regenerateImage")} disabled={Boolean(busy)}>
+                  <ImageIcon size={14} className={busy === "regenerateImage" ? "animate-spin" : ""} /> 
+                  New Visuals
+                </button>
+                <div style={{ flex: 1 }} />
+                <button className="btn btn-green" onClick={() => draftAction("approve")} disabled={Boolean(busy)}>
+                  <Check size={14} /> Approve
+                </button>
+                <button className="btn btn-danger btn-ghost" onClick={async () => {
+                  if (window.confirm("Are you sure? This cannot be undone.")) {
+                    await run("Deleting draft", () => apiCall(`/api/drafts/${selectedDraft.id}`, { method: "DELETE" }));
+                    setSelectedId("");
+                  }
+                }} disabled={Boolean(busy)}>
+                  <Trash2 size={14} />
                 </button>
               </div>
             </div>
