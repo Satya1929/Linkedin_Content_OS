@@ -26,7 +26,7 @@ export function SetupTab({ snapshot, isLinkedInConnected }: Props) {
       iconClass: "blue",
       title: "LinkedIn OAuth",
       description:
-        "Required to publish posts directly and sync analytics. Create a LinkedIn Developer App at developer.linkedin.com, then add the following to your .env file:\n\nLINKEDIN_CLIENT_ID=your_client_id\nLINKEDIN_CLIENT_SECRET=your_client_secret\nLINKEDIN_REDIRECT_URI=http://localhost:3000/api/linkedin/oauth/callback",
+        "Required to publish posts directly and sync analytics. Create a LinkedIn Developer App at developer.linkedin.com, then add the following to your .env file:\n\nLINKEDIN_CLIENT_ID=your_client_id\nLINKEDIN_CLIENT_SECRET=your_client_secret\nLINKEDIN_REDIRECT_URI=http://localhost:3001/api/linkedin/oauth/callback",
       status: isLinkedInConnected ? "ok" : "missing",
       statusLabel: isLinkedInConnected ? "Connected" : "Not connected",
       actionLabel: isLinkedInConnected ? undefined : "Connect LinkedIn →",

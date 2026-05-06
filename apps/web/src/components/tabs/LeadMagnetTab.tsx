@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import type { LeadMagnet, StoreSnapshot } from "@/lib/types";
+import type { StoreSnapshot } from "@/lib/types";
 import { apiCall } from "@/lib/api";
 
 type Props = {
@@ -18,12 +18,12 @@ export function LeadMagnetTab({ snapshot, run, busy }: Props) {
   async function generate() {
     if (!idea.trim()) return;
     await run("Generating lead magnet", async () => {
-      const newLM = await apiCall<LeadMagnet>("/api/lead-magnets", {
+      const updatedSnapshot = await apiCall("/api/lead-magnets", {
         method: "POST",
         body: { idea, ctaLink }
       });
       setIdea(""); setCtaLink("");
-      return { ...snapshot, leadMagnets: [newLM, ...snapshot.leadMagnets] };
+      return updatedSnapshot;
     });
   }
 

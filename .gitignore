@@ -3,13 +3,18 @@ node_modules/
 out/
 dist/
 coverage/
-.env
-.env.local
-.env.*.local
+
+# Environment variables
+.env*
+!.env.example
+
+# Local data
 data/*.json
 data/*.csv
-!.env.example
-!.gitkeep
+
+# Logs
 *.log
 
+# Deployment
 .vercel
+!.gitkeep

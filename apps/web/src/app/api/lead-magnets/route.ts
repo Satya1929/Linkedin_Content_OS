@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStoreSnapshot, saveStoreSnapshot } from "@/lib/store";
+import { getStoreSnapshot, addLeadMagnet } from "@/lib/store";
 import { createDefaultProvider, buildGenerationSystemPrompt } from "@/lib/providers";
 import { loadPromptBundle } from "@/lib/prompts";
 
@@ -42,14 +42,11 @@ export async function POST(request: Request) {
       pdfOutline,
       postSequence,
       ctaLink: ctaLink || "https://example.com/download-guide",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     };
 
-    snapshot.leadMagnets = [leadMagnet, ...snapshot.leadMagnets];
-    await saveStoreSnapshot(snapshot);
+    const updatedSnapshot = await addLeadMagnet(leadMagnet);
 
-    return NextResponse.json(leadMagnet);
+    return NextResponse.json(updatedSnapshot);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });

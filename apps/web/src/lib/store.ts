@@ -428,10 +428,15 @@ export async function updateDraft(id: string, updater: (draft: Draft, snapshot: 
 
 export async function addMetricsAndInsights(metrics: MetricsSnapshot[], insights: PerformanceInsight[]) {
   if (metrics.length > 0) {
+    // Validate draftId references - set to null if draft doesn't exist (FK constraint)
+    const existingDraftIds = new Set(
+      (await prisma.draft.findMany({ select: { id: true } })).map(d => d.id)
+    );
+
     await prisma.metricsSnapshot.createMany({
       data: metrics.map((m) => ({
         id: m.id,
-        draftId: m.draftId,
+        draftId: m.draftId && existingDraftIds.has(m.draftId) ? m.draftId : null,
         impressions: m.impressions,
         likes: m.likes,
         comments: m.comments,
